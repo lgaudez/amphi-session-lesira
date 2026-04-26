@@ -530,7 +530,7 @@ export default function App() {
           </section>
         )}
 
-        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 hover:opacity-100 transition-all">
+        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8 transition-all">
           <div className="font-black text-xl tracking-tighter text-slate-900 border-l-4 border-slate-900 pl-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
 
           <div className="flex flex-col items-center gap-2.5 flex-1 order-3 md:order-2 px-4 border-slate-100 md:border-x">
