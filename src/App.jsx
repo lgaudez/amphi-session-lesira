@@ -383,11 +383,11 @@ export default function App() {
                 href="https://www.gaudeztechlab.com"
                 target="_blank"
                 rel="noreferrer"
-                className="hover:text-blue-600 transition-all flex items-center gap-1.5 group/hbadge"
+                className="transition-all duration-300 flex items-center gap-1.5 group/hbadge hover:text-blue-600"
               >
-                <span className="opacity-60 group-hover/hbadge:opacity-100 transition-opacity">Built by</span>
-                <img src={logoGaudez} alt="" className="h-2.5 w-auto grayscale group-hover/hbadge:grayscale-0 transition-all" />
-                <span className="group-hover/hbadge:underline decoration-blue-600/30 underline-offset-2">Gaudez Tech Lab</span>
+                <span className="opacity-40 group-hover/hbadge:opacity-100 transition-all duration-300 group-hover/hbadge:-translate-x-1">Built by</span>
+                <img src={logoGaudez} alt="" className="h-2.5 w-auto grayscale group-hover/hbadge:grayscale-0 transition-all duration-500 group-hover/hbadge:scale-125 group-hover/hbadge:rotate-[5deg]" />
+                <span className="group-hover/hbadge:translate-x-1 transition-all duration-300">Gaudez Tech Lab</span>
               </a>
             </p>
           </div>
