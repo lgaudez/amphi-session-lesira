@@ -222,7 +222,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 text-xs font-medium">
           <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" /> {item['Ministère']}</span>
-          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']}) — {item['Région']}</span>
+          <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']}) - <span className="uppercase">{item['Région']}</span></span>
         </div>
       </div>
       <div className="flex items-center gap-2">
@@ -459,9 +459,8 @@ export default function App() {
                         <td className="px-6 py-5"><div className={cn("space-y-1.5", taken.includes(item.Référence) && "line-through")}><div className="flex items-center gap-2 flex-wrap"><span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{item.Référence}</span><p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-sm">{item['Intitulé du poste']}</p></div><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{item['Thématique']}</p></div></td>
                         <td className="px-6 py-5">
                           <p className="text-xs font-black text-slate-800 truncate max-w-[180px]">{item['Ministère']}</p>
-                          <p className="text-[11px] text-slate-500 font-medium italic flex flex-col">
-                            <span>{item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']})</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">— {item['Région']} —</span>
+                          <p className="text-[11px] text-slate-500 font-medium italic">
+                            {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']}) - <span className="uppercase text-[9px] font-black tracking-tighter">{item['Région']}</span>
                           </p>
                         </td>
                         <td className="px-6 py-5 text-center"><Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge></td>
