@@ -208,16 +208,16 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
       <div className="flex items-center justify-center w-8 shrink-0">
         <span className="text-xl font-black text-slate-300 group-hover:text-slate-500 transition-colors">{index + 1}</span>
       </div>
-      {item['LIEN FICHE DE POSTE'] && (
-        <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors shrink-0" title="Voir la fiche">
-          <ExternalLink className="w-4 h-4" />
-        </a>
-      )}
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">{id}</span>
           <h3 className={cn("text-base font-bold text-slate-900 truncate", isTaken && "line-through")}>{item['Intitulé du poste']}</h3>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+          {item['LIEN FICHE DE POSTE'] && (
+            <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0" title="Voir la fiche">
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 text-xs font-medium">
           <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" /> {item['Ministère']}</span>
