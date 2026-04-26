@@ -252,7 +252,8 @@ export default function App() {
   const [envFilter, setEnvFilter] = useState([]);
   const [minFilter, setMinFilter] = useState([]);
   const [themeFilter, setThemeFilter] = useState([]);
-  const [locFilter, setLocFilter] = useState([]);
+  const [regionFilter, setRegionFilter] = useState([]);
+  const [deptFilter, setDeptFilter] = useState([]);
   const [hideTaken, setHideTaken] = useState(false);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -308,7 +309,11 @@ export default function App() {
     min: Array.from(new Set(data.map(i => i['Ministère'])).values()).filter(Boolean).sort(),
     themes: Array.from(new Set(data.map(i => i['Thématique'])).values()).filter(Boolean).sort(),
     env: ['AC', 'ATE'],
-    loc: Array.from(new Set(data.map(i => i['Localisation (Commune ou adresse exacte)']))).filter(Boolean).sort()
+    regions: Array.from(new Set(data.map(i => i['Région']))).filter(Boolean).sort(),
+    depts: Array.from(new Set(data.map(i => {
+      const cp = i['Code postal'];
+      return cp ? cp.substring(0, 2) : null;
+    }))).filter(Boolean).sort()
   }), [data]);
 
   const filteredData = useMemo(() => {
@@ -324,12 +329,13 @@ export default function App() {
       const matchesEnv = envFilter.length === 0 || envFilter.includes(item['Env.']);
       const matchesMin = minFilter.length === 0 || minFilter.includes(item['Ministère']);
       const matchesTheme = themeFilter.length === 0 || themeFilter.includes(item['Thématique']);
-      const matchesLoc = locFilter.length === 0 || locFilter.includes(item['Localisation (Commune ou adresse exacte)']);
+      const matchesRegion = regionFilter.length === 0 || regionFilter.includes(item['Région']);
+      const matchesDept = deptFilter.length === 0 || deptFilter.includes(item['Code postal']?.substring(0, 2));
       const matchesTaken = !hideTaken || !taken.includes(id);
 
-      return matchesSearch && matchesEnv && matchesMin && matchesTheme && matchesLoc && matchesTaken;
+      return matchesSearch && matchesEnv && matchesMin && matchesTheme && matchesRegion && matchesDept && matchesTaken;
     });
-  }, [data, search, envFilter, minFilter, themeFilter, locFilter, hideTaken, taken]);
+  }, [data, search, envFilter, minFilter, themeFilter, regionFilter, deptFilter, hideTaken, taken]);
 
   const rankedData = useMemo(() => shortlisted.map(id => data.find(i => i.Référence === id)).filter(Boolean), [shortlisted, data]);
   const stats = useMemo(() => ({ total: filteredData.length, ac: filteredData.filter(i => i['Env.'] === 'AC').length, sel: shortlisted.length }), [filteredData, shortlisted]);
@@ -337,7 +343,7 @@ export default function App() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const pagedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, locFilter, hideTaken, itemsPerPage]);
+  useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, regionFilter, deptFilter, hideTaken, itemsPerPage]);
 
   if (loading) return <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-4"><Loader2 className="w-10 h-10 text-blue-800 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Chargement...</p></div>;
 
@@ -391,8 +397,8 @@ export default function App() {
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-50 pb-6">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2"><Filter className="w-5 h-5 text-blue-800" /><h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">Filtres Avancés</h2></div>
-                  {(envFilter.length > 0 || minFilter.length > 0 || themeFilter.length > 0 || locFilter.length > 0) && (
-                    <button onClick={() => { setEnvFilter([]); setMinFilter([]); setThemeFilter([]); setLocFilter([]); }} className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase hover:bg-slate-800 hover:text-white transition-all"><RotateCcw className="w-3 h-3" /> Réinitialiser</button>
+                  {(envFilter.length > 0 || minFilter.length > 0 || themeFilter.length > 0 || regionFilter.length > 0 || deptFilter.length > 0) && (
+                    <button onClick={() => { setEnvFilter([]); setMinFilter([]); setThemeFilter([]); setRegionFilter([]); setDeptFilter([]); }} className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase hover:bg-slate-800 hover:text-white transition-all"><RotateCcw className="w-3 h-3" /> Réinitialiser</button>
                   )}
                 </div>
                 <button onClick={() => setHideTaken(!hideTaken)} className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all border uppercase tracking-widest", hideTaken ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}>{hideTaken ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />} Cacher Indispo</button>
@@ -403,10 +409,11 @@ export default function App() {
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Recherche Libre</label>
                   <input type="text" placeholder="ID, Poste, Mots-clés..." className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-bold text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
-                <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous les env." />
+                <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
                 <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
                 <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                <MultiSelect label="Localisation" icon={MapPin} options={options.loc} selected={locFilter} onChange={setLocFilter} placeholder="Toutes localités" />
+                <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
+                <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
               </div>
             </section>
 
