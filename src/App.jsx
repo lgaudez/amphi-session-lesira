@@ -386,7 +386,7 @@ export default function App() {
                 className="transition-all duration-300 flex items-center gap-1.5 group/hbadge hover:text-blue-600"
               >
                 <span className="opacity-40 group-hover/hbadge:opacity-100 transition-all duration-300 group-hover/hbadge:-translate-x-1">Built by</span>
-                <img src={logoGaudez} alt="" className="h-2.5 w-auto grayscale group-hover/hbadge:grayscale-0 transition-all duration-500 group-hover/hbadge:scale-125 group-hover/hbadge:rotate-[5deg]" />
+                <img src={logoGaudez} alt="" className="h-4 w-auto opacity-80 group-hover/hbadge:opacity-100 transition-all duration-500 group-hover/hbadge:scale-125 group-hover/hbadge:rotate-[5deg] drop-shadow-sm" />
                 <span className="group-hover/hbadge:translate-x-1 transition-all duration-300">Gaudez Tech Lab</span>
               </a>
             </p>
