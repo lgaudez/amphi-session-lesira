@@ -208,6 +208,11 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
       <div className="flex items-center justify-center w-8 shrink-0">
         <span className="text-xl font-black text-slate-300 group-hover:text-slate-500 transition-colors">{index + 1}</span>
       </div>
+      {item['LIEN FICHE DE POSTE'] && (
+        <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-1.5 text-slate-300 hover:text-blue-600 transition-colors shrink-0" title="Voir la fiche">
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      )}
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">{id}</span>
@@ -220,11 +225,6 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {item['LIEN FICHE DE POSTE'] && (
-          <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 text-blue-800 rounded-xl hover:bg-blue-800 hover:text-white transition-all border border-blue-100">
-            <ExternalLink className="w-5 h-5" />
-          </a>
-        )}
         <button onClick={() => toggleTaken(id)} className={cn("p-2 rounded-xl transition-all border", isTaken ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-300 border-slate-200 hover:text-red-600 hover:border-red-100")}>
           <CheckCircle2 className="w-5 h-5" />
         </button>
