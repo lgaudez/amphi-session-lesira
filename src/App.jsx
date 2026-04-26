@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Papa from 'papaparse';
+import logoGaudez from './assets/logo-gaudez.png';
 import {
   Search,
   Building2,
@@ -532,9 +533,12 @@ export default function App() {
         <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 hover:opacity-100 transition-all">
           <div className="font-black text-xl tracking-tighter text-slate-900 border-l-4 border-slate-900 pl-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
 
-          <div className="flex flex-col items-center gap-1.5 flex-1 order-3 md:order-2">
+          <div className="flex flex-col items-center gap-2.5 flex-1 order-3 md:order-2 px-4 border-slate-100 md:border-x">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Propulsé par Gaudez Tech Lab</p>
-            <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600/60 hover:text-blue-600 font-bold transition-colors">www.gaudeztechlab.com</a>
+            <div className="flex items-center gap-3">
+              <img src={logoGaudez} alt="Gaudez Tech Lab" className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" />
+              <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600/60 hover:text-blue-600 font-bold transition-colors underline decoration-blue-600/20 underline-offset-4 tracking-tight">www.gaudeztechlab.com</a>
+            </div>
           </div>
 
           <div className="flex flex-col md:items-end items-center gap-1 order-2 md:order-3">
