@@ -404,7 +404,7 @@ export default function App() {
               <ExternalLink className="w-4 h-4 opacity-70" />
             </a>
             <input type="file" ref={fileInputRef} onChange={importSession} className="hidden" accept=".json" />
-            <button onClick={() => fileInputRef.current.click()} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session">
+            <button onClick={() => fileInputRef.current.click()} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session (JSON)">
               <Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-800" />
             </button>
             <button onClick={exportSession} className="p-3 bg-blue-800 text-white rounded-2xl hover:bg-blue-900 transition-all shadow-lg shadow-blue-100 group" title="Sauvegarder la session (JSON)">
