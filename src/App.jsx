@@ -220,6 +220,11 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
         </div>
       </div>
       <div className="flex items-center gap-2">
+        {item['LIEN FICHE DE POSTE'] && (
+          <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-2 bg-blue-50 text-blue-800 rounded-xl hover:bg-blue-800 hover:text-white transition-all border border-blue-100">
+            <ExternalLink className="w-5 h-5" />
+          </a>
+        )}
         <button onClick={() => toggleTaken(id)} className={cn("p-2 rounded-xl transition-all border", isTaken ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-300 border-slate-200 hover:text-red-600 hover:border-red-100")}>
           <CheckCircle2 className="w-5 h-5" />
         </button>
