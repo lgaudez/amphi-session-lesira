@@ -354,7 +354,20 @@ export default function App() {
 
   useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, regionFilter, deptFilter, hideTaken, itemsPerPage]);
 
-  if (loading) return <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-4"><Loader2 className="w-10 h-10 text-blue-800 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Chargement...</p></div>;
+  if (loading) return (
+    <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 gap-6">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-blue-50 rounded-full animate-pulse" />
+        <Loader2 className="w-16 h-16 text-blue-800 animate-spin absolute inset-0" />
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        <p className="text-slate-900 font-black uppercase tracking-[0.3em] text-sm animate-pulse">Chargement</p>
+        <div className="h-1 w-24 bg-slate-100 rounded-full overflow-hidden">
+          <div className="h-full bg-blue-800 animate-progress w-full" />
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 md:px-8 lg:px-12 selection:bg-blue-100 selection:text-blue-900">
@@ -516,9 +529,20 @@ export default function App() {
           </section>
         )}
 
-        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-all">
-          <div className="font-black text-xl tracking-tighter text-slate-900 border-x-4 border-slate-900 px-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
-          <div className="flex flex-col items-end gap-1"><p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">Système de Session • ESIRA</p><p className="text-[11px] font-black text-slate-900 tracking-tighter uppercase">{new Date().toLocaleDateString('fr-FR')} • {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div>
+        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8 opacity-40 hover:opacity-100 transition-all">
+          <div className="font-black text-xl tracking-tighter text-slate-900 border-l-4 border-slate-900 pl-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
+
+          <div className="flex flex-col items-center gap-1.5 flex-1 order-3 md:order-2">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Propulsé par Gaudez Tech Lab</p>
+            <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600/60 hover:text-blue-600 font-bold transition-colors">www.gaudeztechlab.com</a>
+          </div>
+
+          <div className="flex flex-col md:items-end items-center gap-1 order-2 md:order-3">
+            <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">Système de Session • ESIRA</p>
+            <p className="text-[11px] font-black text-slate-900 tracking-tighter uppercase">
+              {new Date().toLocaleDateString('fr-FR')} • {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          </div>
         </footer>
       </div>
     </div>
