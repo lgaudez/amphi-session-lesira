@@ -380,6 +380,16 @@ export default function App() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <a
+              href="https://www.gaudeztechlab.com"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2.5 px-4 py-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 transition-all hover:border-blue-100 hover:shadow-sm group/hlogo"
+              title="Built by Gaudez Tech Lab"
+            >
+              <img src={logoGaudez} alt="" className="h-4 w-auto group-hover/hlogo:scale-110 transition-transform" />
+              <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">Built by Gaudez Tech Lab</span>
+            </a>
+            <a
               href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
               target="_blank"
               rel="noreferrer"
