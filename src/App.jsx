@@ -209,10 +209,9 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
       <div className="flex items-center justify-center w-8 shrink-0">
         <span className="text-xl font-black text-slate-300 group-hover:text-slate-500 transition-colors">{index + 1}</span>
       </div>
-      <div className="flex-1 min-w-0 space-y-1">
+      <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">{id}</span>
-          <h3 className={cn("text-base font-bold text-slate-900 truncate", isTaken && "line-through")}>{item['Intitulé du poste']}</h3>
+          <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 flex-shrink-0 tabular-nums">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
           {item['LIEN FICHE DE POSTE'] && (
             <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0" title="Voir la fiche">
@@ -220,6 +219,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
             </a>
           )}
         </div>
+        <h3 className={cn("text-base font-bold text-slate-900 leading-tight", isTaken && "line-through")}>{item['Intitulé du poste']}</h3>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 text-xs font-medium">
           <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" /> {item['Ministère']}</span>
           <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']}) - <span className="uppercase">{item['Région']}</span></span>
@@ -452,11 +452,17 @@ export default function App() {
                       <th className="px-6 py-5 text-right w-32"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-100">
                     {pagedData.map((item, idx) => (
                       <tr key={`${item.Référence}-${idx}`} className={cn("transition-all group", taken.includes(item.Référence) && "opacity-40 grayscale bg-slate-50/50", shortlisted.includes(item.Référence) && "bg-amber-50/20")}>
                         <td className="px-6 py-5 text-center"><button onClick={() => toggleShortlist(item.Référence)} className={cn("transition-all hover:scale-125 active:scale-90", shortlisted.includes(item.Référence) ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}><Star className={cn("w-7 h-7", shortlisted.includes(item.Référence) && "fill-current animate-in zoom-in-50")} /></button></td>
-                        <td className="px-6 py-5"><div className={cn("space-y-1.5", taken.includes(item.Référence) && "line-through")}><div className="flex items-center gap-2 flex-wrap"><span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{item.Référence}</span><p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-sm">{item['Intitulé du poste']}</p></div><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{item['Thématique']}</p></div></td>
+                        <td className="px-6 py-5">
+                          <div className={cn("flex flex-col gap-1.5", taken.includes(item.Référence) && "line-through")}>
+                            <span className="text-[9px] font-black bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded border border-slate-100 w-fit tabular-nums">{item.Référence}</span>
+                            <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-sm leading-tight">{item['Intitulé du poste']}</p>
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item['Thématique']}</p>
+                          </div>
+                        </td>
                         <td className="px-6 py-5">
                           <p className="text-xs font-black text-slate-800 truncate max-w-[180px]">{item['Ministère']}</p>
                           <p className="text-[11px] text-slate-500 font-medium italic">
