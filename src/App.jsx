@@ -376,19 +376,22 @@ export default function App() {
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <div className="flex items-center gap-3"><div className="w-2 h-10 bg-blue-800 rounded-full" /><h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">Amphi Session <span className="bg-blue-800 text-white px-3 py-1 rounded-xl text-xl md:text-2xl">PRO</span></h1></div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-5">Outil d'aide au choix • ESIRA</p>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-5 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>Outil d'aide au choix • ESIRA</span>
+              <span className="opacity-20 hidden sm:inline">•</span>
+              <a
+                href="https://www.gaudeztechlab.com"
+                target="_blank"
+                rel="noreferrer"
+                className="hover:text-blue-600 transition-all flex items-center gap-1.5 group/hbadge"
+              >
+                <span className="opacity-60 group-hover/hbadge:opacity-100 transition-opacity">Built by</span>
+                <img src={logoGaudez} alt="" className="h-2.5 w-auto grayscale group-hover/hbadge:grayscale-0 transition-all" />
+                <span className="group-hover/hbadge:underline decoration-blue-600/30 underline-offset-2">Gaudez Tech Lab</span>
+              </a>
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <a
-              href="https://www.gaudeztechlab.com"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-2.5 px-4 py-2.5 bg-white text-slate-400 hover:text-blue-600 rounded-2xl border border-slate-100 transition-all hover:border-blue-100 hover:shadow-sm group/hlogo"
-              title="Built by Gaudez Tech Lab"
-            >
-              <img src={logoGaudez} alt="" className="h-4 w-auto group-hover/hlogo:scale-110 transition-transform" />
-              <span className="text-[10px] font-black uppercase tracking-widest hidden lg:inline">Built by Gaudez Tech Lab</span>
-            </a>
             <a
               href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
               target="_blank"
