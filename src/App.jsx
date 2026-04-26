@@ -8,23 +8,21 @@ import {
   ExternalLink,
   Filter,
   BarChart3,
-  Info,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
   Loader2,
-  AlertCircle,
   Star,
   CheckCircle2,
-  Circle,
-  EyeOff,
-  Eye,
   Download,
   Upload,
   Trophy,
   LayoutGrid,
   ListOrdered,
   X,
-  GripVertical
+  GripVertical,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  RotateCcw
 } from 'lucide-react';
 import {
   BarChart,
@@ -63,17 +61,9 @@ function cn(...inputs) {
 
 // --- Configuration ---
 const CSV_URL = "https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/export?format=csv&gid=0";
-const ITEMS_PER_PAGE = 10;
 
 const COLORS = [
-  '#000091', // Bleu France
-  '#E1000F', // Rouge
-  '#00AC8E', // Vert
-  '#FFB800', // Jaune
-  '#718096', // Slate
-  '#ED8936', // Orange
-  '#4299E1', // Bleu clair
-  '#9F7AEA', // Violet
+  '#000091', '#E1000F', '#00AC8E', '#FFB800', '#718096', '#ED8936', '#4299E1', '#9F7AEA'
 ];
 
 // --- Components ---
@@ -103,87 +93,137 @@ const Badge = ({ children, variant = 'default' }) => {
   );
 };
 
-const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id });
+const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Icon }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const dropdownRef = useRef(null);
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isDragging ? 10 : 0,
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(opt =>
+    (opt || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const toggleOption = (opt) => {
+    const newSelected = selected.includes(opt)
+      ? selected.filter(o => o !== opt)
+      : [...selected, opt];
+    onChange(newSelected);
   };
 
+  const clearAll = () => onChange([]);
+  const selectAll = () => onChange([...options]);
+
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "bg-white flex items-center gap-4 p-4 transition-all group relative",
-        isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
-        !isDragging && "hover:bg-slate-50/50",
-        isTaken && "opacity-50 grayscale bg-slate-50"
-      )}
-    >
+    <div className="space-y-2 relative" ref={dropdownRef}>
+      <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1">
+        {Icon && <Icon className="w-3 h-3" />} {label}
+      </label>
       <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab active:cursor-grabbing p-2 text-slate-300 hover:text-slate-600 transition-colors"
+        onClick={() => setIsOpen(!isOpen)}
+        className={cn(
+          "w-full px-4 py-3 bg-slate-100 border-2 border-transparent rounded-2xl cursor-pointer flex items-center justify-between transition-all hover:bg-slate-200/50",
+          isOpen && "border-blue-500 bg-white"
+        )}
       >
-        <GripVertical className="w-5 h-5" />
+        <div className="flex-1 truncate text-sm font-bold text-slate-700">
+          {selected.length === 0 ? (
+            <span className="text-slate-400 font-medium">{placeholder}</span>
+          ) : (
+            selected.length === 1 ? selected[0] : `${selected.length} sélectionnés`
+          )}
+        </div>
+        <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", isOpen && "rotate-180")} />
       </div>
 
+      {isOpen && (
+        <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="p-3 border-b border-slate-100 bg-slate-50/50 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                autoFocus
+                type="text"
+                placeholder="Rechercher..."
+                className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:border-blue-500 font-medium"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <button onClick={selectAll} className="p-2 text-[10px] font-black text-blue-800 uppercase hover:bg-blue-50 rounded-lg shrink-0">Tous</button>
+            <button onClick={clearAll} className="p-2 text-[10px] font-black text-red-600 uppercase hover:bg-red-50 rounded-lg shrink-0">Vider</button>
+          </div>
+          <div className="max-h-[250px] overflow-y-auto p-2 space-y-0.5">
+            {filteredOptions.length === 0 ? (
+              <p className="p-4 text-center text-xs text-slate-400 font-bold uppercase italic">Aucun résultat</p>
+            ) : (
+              filteredOptions.map(opt => (
+                <div
+                  key={opt}
+                  onClick={() => toggleOption(opt)}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all",
+                    selected.includes(opt) ? "bg-blue-800 text-white" : "hover:bg-slate-100 text-slate-700"
+                  )}
+                >
+                  <div className={cn(
+                    "w-4 h-4 rounded border flex items-center justify-center shrink-0",
+                    selected.includes(opt) ? "bg-white border-white" : "border-slate-300"
+                  )}>
+                    {selected.includes(opt) && <Check className="w-3 h-3 text-blue-800" />}
+                  </div>
+                  <span className="text-sm font-bold truncate">{opt}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
+
+  return (
+    <div ref={setNodeRef} style={style} className={cn(
+      "bg-white flex items-center gap-4 p-4 transition-all group relative",
+      isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
+      !isDragging && "hover:bg-slate-50/50",
+      isTaken && "opacity-50 grayscale bg-slate-50"
+    )}>
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2 text-slate-300 hover:text-slate-600 transition-colors">
+        <GripVertical className="w-5 h-5" />
+      </div>
       <div className="flex items-center justify-center w-8 shrink-0">
         <span className="text-xl font-black text-slate-300 group-hover:text-slate-500 transition-colors">{index + 1}</span>
       </div>
-
       <div className="flex-1 min-w-0 space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">
-            {id}
-          </span>
-          <h3 className={cn("text-base font-bold text-slate-900 truncate", isTaken && "line-through")}>
-            {item['Intitulé du poste']}
-          </h3>
+          <span className="text-[10px] font-black text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex-shrink-0">{id}</span>
+          <h3 className={cn("text-base font-bold text-slate-900 truncate", isTaken && "line-through")}>{item['Intitulé du poste']}</h3>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 text-xs font-medium">
           <span className="flex items-center gap-1"><Building2 className="w-3.5 h-3.5" /> {item['Ministère']}</span>
           <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" /> {item['Localisation (Commune ou adresse exacte)']}</span>
-          {item['LIEN FICHE DE POSTE'] && (
-            <a
-              href={item['LIEN FICHE DE POSTE']}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 font-bold text-blue-800 uppercase tracking-tighter hover:underline"
-            >
-              Fiche <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
         </div>
       </div>
-
       <div className="flex items-center gap-2">
-        <button
-          onClick={() => toggleTaken(id)}
-          className={cn(
-            "p-2 rounded-xl transition-all border",
-            isTaken ? "bg-red-600 text-white border-red-600 shadow-inner" : "bg-white text-slate-300 border-slate-200 hover:text-red-600 hover:border-red-100"
-          )}
-        >
+        <button onClick={() => toggleTaken(id)} className={cn("p-2 rounded-xl transition-all border", isTaken ? "bg-red-600 text-white border-red-600" : "bg-white text-slate-300 border-slate-200 hover:text-red-600 hover:border-red-100")}>
           <CheckCircle2 className="w-5 h-5" />
         </button>
-        <button
-          onClick={() => toggleShortlist(id)}
-          className="p-2 text-slate-200 hover:text-red-500 transition-all"
-        >
-          <X className="w-6 h-6" />
-        </button>
+        <button onClick={() => toggleShortlist(id)} className="p-2 text-slate-200 hover:text-red-500 transition-all"><X className="w-6 h-6" /></button>
       </div>
     </div>
   );
@@ -195,491 +235,229 @@ export default function App() {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  // View State
   const [viewMode, setViewMode] = useState('explore');
 
   // Persistence States
-  const [shortlisted, setShortlisted] = useState(() => {
-    const saved = localStorage.getItem('ira_shortlisted');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [taken, setTaken] = useState(() => {
-    const saved = localStorage.getItem('ira_taken');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
+  const [taken, setTaken] = useState(() => JSON.parse(localStorage.getItem('ira_taken') || '[]'));
 
-  // Filters
+  // Multi-Filter States
   const [search, setSearch] = useState('');
-  const [envFilter, setEnvFilter] = useState('Tous');
-  const [minFilter, setMinFilter] = useState('Tous');
-  const [themeFilter, setThemeFilter] = useState('Tous');
+  const [envFilter, setEnvFilter] = useState([]);
+  const [minFilter, setMinFilter] = useState([]);
+  const [themeFilter, setThemeFilter] = useState([]);
+  const [locFilter, setLocFilter] = useState([]);
   const [hideTaken, setHideTaken] = useState(false);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // DND Configuration
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Persistence Effects
-  useEffect(() => {
-    localStorage.setItem('ira_shortlisted', JSON.stringify(shortlisted));
-  }, [shortlisted]);
+  useEffect(() => { localStorage.setItem('ira_shortlisted', JSON.stringify(shortlisted)); }, [shortlisted]);
+  useEffect(() => { localStorage.setItem('ira_taken', JSON.stringify(taken)); }, [taken]);
 
-  useEffect(() => {
-    localStorage.setItem('ira_taken', JSON.stringify(taken));
-  }, [taken]);
-
-  // --- Data Fetching ---
   useEffect(() => {
     Papa.parse(CSV_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
+      download: true, header: true, skipEmptyLines: true,
       complete: (results) => {
-        const cleanedData = results.data.map((row) => {
-          const newRow = {};
-          Object.keys(row).forEach(key => {
-            const normalizedKey = key.replace(/\s+/g, ' ').trim();
-            newRow[normalizedKey] = row[key] ? row[key].trim() : '';
-          });
-          return newRow;
-        });
-        setData(cleanedData);
+        setData(results.data.map(row => {
+          const r = {};
+          Object.keys(row).forEach(k => { r[k.replace(/\s+/g, ' ').trim()] = row[k]?.trim() || ''; });
+          return r;
+        }));
         setLoading(false);
       },
-      error: (err) => {
-        setError("Impossible de récupérer les fiches de poste.");
-        setLoading(false);
-      }
+      error: () => { setError("Erreur de récupération."); setLoading(false); }
     });
   }, []);
 
-  // --- Actions ---
-  const toggleShortlist = (id) => {
-    setShortlisted(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const toggleTaken = (id) => {
-    setTaken(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (active.id !== over.id) {
-      setShortlisted((items) => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
+  const toggleShortlist = (id) => setShortlisted(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+  const toggleTaken = (id) => setTaken(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+  const handleDragEnd = (e) => {
+    if (e.active.id !== e.over.id) {
+      setShortlisted((items) => arrayMove(items, items.indexOf(e.active.id), items.indexOf(e.over.id)));
     }
   };
 
   const exportSession = () => {
-    const sessionData = { shortlisted, taken, timestamp: new Date().toISOString() };
-    const blob = new Blob([JSON.stringify(sessionData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `session-ira-amphi.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const blob = new Blob([JSON.stringify({ shortlisted, taken }, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `session-ira.json`; a.click();
   };
 
   const importSession = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const f = e.target.files[0]; if (!f) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target.result);
-        if (json.shortlisted) setShortlisted(json.shortlisted);
-        if (json.taken) setTaken(json.taken);
-      } catch (err) {
-        alert("Erreur de format.");
-      }
+    reader.onload = (ev) => {
+      const json = JSON.parse(ev.target.result);
+      if (json.shortlisted) setShortlisted(json.shortlisted);
+      if (json.taken) setTaken(json.taken);
     };
-    reader.readAsText(file);
+    reader.readAsText(f);
   };
 
-  // --- Derivative State ---
-  const ministries = useMemo(() => {
-    const set = new Set(data.map(item => item['Ministère']).filter(Boolean));
-    return ['Tous', ...Array.from(set).sort()];
-  }, [data]);
-
-  const themes = useMemo(() => {
-    const set = new Set(data.map(item => item['Thématique']).filter(Boolean));
-    return ['Tous', ...Array.from(set).sort()];
-  }, [data]);
+  const options = useMemo(() => ({
+    min: Array.from(new Set(data.map(i => i['Ministère'])).values()).filter(Boolean).sort(),
+    themes: Array.from(new Set(data.map(i => i['Thématique'])).values()).filter(Boolean).sort(),
+    env: ['AC', 'ATE'],
+    loc: Array.from(new Set(data.map(i => i['Localisation (Commune ou adresse exacte)']))).filter(Boolean).sort()
+  }), [data]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
       const id = item.Référence;
-      const searchLower = search.toLowerCase();
-      const matchesSearch = !search ||
-        (item['Intitulé du poste'] || '').toLowerCase().includes(searchLower) ||
-        (item['Localisation (Commune ou adresse exacte)'] || '').toLowerCase().includes(searchLower) ||
-        (item['Région'] || '').toLowerCase().includes(searchLower) ||
-        (item['Code postal'] || '').toLowerCase().includes(searchLower);
+      const searchTerms = search.toLowerCase().split(/[ ,]+/).filter(Boolean);
+      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term =>
+        id.toLowerCase().includes(term) ||
+        (item['Intitulé du poste'] || '').toLowerCase().includes(term) ||
+        (item['Localisation (Commune ou adresse exacte)'] || '').toLowerCase().includes(term)
+      );
 
-      const matchesEnv = envFilter === 'Tous' || item['Env.'] === envFilter;
-      const matchesMin = minFilter === 'Tous' || item['Ministère'] === minFilter;
-      const matchesTheme = themeFilter === 'Tous' || item['Thématique'] === themeFilter;
+      const matchesEnv = envFilter.length === 0 || envFilter.includes(item['Env.']);
+      const matchesMin = minFilter.length === 0 || minFilter.includes(item['Ministère']);
+      const matchesTheme = themeFilter.length === 0 || themeFilter.includes(item['Thématique']);
+      const matchesLoc = locFilter.length === 0 || locFilter.includes(item['Localisation (Commune ou adresse exacte)']);
       const matchesTaken = !hideTaken || !taken.includes(id);
 
-      return matchesSearch && matchesEnv && matchesMin && matchesTheme && matchesTaken;
+      return matchesSearch && matchesEnv && matchesMin && matchesTheme && matchesLoc && matchesTaken;
     });
-  }, [data, search, envFilter, minFilter, themeFilter, hideTaken, taken]);
+  }, [data, search, envFilter, minFilter, themeFilter, locFilter, hideTaken, taken]);
 
-  const rankedData = useMemo(() => {
-    return shortlisted
-      .map(id => data.find(item => item.Référence === id))
-      .filter(Boolean);
-  }, [shortlisted, data]);
+  const rankedData = useMemo(() => shortlisted.map(id => data.find(i => i.Référence === id)).filter(Boolean), [shortlisted, data]);
+  const stats = useMemo(() => ({ total: filteredData.length, ac: filteredData.filter(i => i['Env.'] === 'AC').length, sel: shortlisted.length }), [filteredData, shortlisted]);
 
-  const stats = useMemo(() => {
-    const total = filteredData.length;
-    const ac = filteredData.filter(item => item['Env.'] === 'AC').length;
-    return { total, ac, selection: shortlisted.length };
-  }, [filteredData, shortlisted]);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const pagedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  // Pagination for explore mode
-  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-  const pagedData = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, locFilter, hideTaken, itemsPerPage]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, envFilter, minFilter, themeFilter, hideTaken]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-4">
-        <Loader2 className="w-10 h-10 text-blue-800 animate-spin" />
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Préparation de l'amphi...</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 gap-4"><Loader2 className="w-10 h-10 text-blue-800 animate-spin" /><p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Chargement...</p></div>;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-4 py-8 md:px-8 lg:px-12 selection:bg-blue-100 selection:text-blue-900">
       <div className="max-w-[1400px] mx-auto space-y-8">
-
-        {/* Header */}
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-10 bg-blue-800 rounded-full" />
-              <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                Amphi Session <span className="bg-blue-800 text-white px-3 py-1 rounded-xl text-xl md:text-2xl">PRO</span>
-              </h1>
-            </div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-5">
-              Outil d'aide au choix • École d'administration
-            </p>
+            <div className="flex items-center gap-3"><div className="w-2 h-10 bg-blue-800 rounded-full" /><h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-3">Amphi Session <span className="bg-blue-800 text-white px-3 py-1 rounded-xl text-xl md:text-2xl">PRO</span></h1></div>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-5">Outil d'aide au choix • ESIRA</p>
           </div>
-
           <div className="flex items-center gap-2">
             <input type="file" ref={fileInputRef} onChange={importSession} className="hidden" accept=".json" />
-            <button onClick={() => fileInputRef.current.click()} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm group">
-              <Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-800" />
-            </button>
-            <button onClick={exportSession} className="flex items-center gap-3 px-6 py-3 bg-blue-800 text-white rounded-2xl font-bold hover:bg-blue-900 transition-all shadow-lg shadow-blue-100">
-              <Download className="w-5 h-5" /> Sauvegarder
-            </button>
+            <button onClick={() => fileInputRef.current.click()} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm group"><Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-800" /></button>
+            <button onClick={exportSession} className="flex items-center gap-3 px-6 py-3 bg-blue-800 text-white rounded-2xl font-bold hover:bg-blue-900 transition-all shadow-lg shadow-blue-100"><Download className="w-5 h-5" /> Sauvegarder</button>
           </div>
         </header>
 
-        {/* Navigation */}
-        <nav className="flex flex-col md:flex-row gap-4 items-center justify-center">
+        <nav className="flex justify-center">
           <div className="flex p-1.5 bg-slate-200/50 rounded-2xl shadow-inner w-full md:w-fit">
-            <button
-              onClick={() => setViewMode('explore')}
-              className={cn(
-                "flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-black transition-all text-sm uppercase tracking-wider",
-                viewMode === 'explore' ? "bg-white text-blue-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <LayoutGrid className="w-5 h-5" /> Explorateur
-            </button>
-            <button
-              onClick={() => setViewMode('ranking')}
-              className={cn(
-                "flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-black transition-all text-sm uppercase tracking-wider relative",
-                viewMode === 'ranking' ? "bg-white text-blue-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <ListOrdered className="w-5 h-5" /> Mon Ranking
-              {shortlisted.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] w-6 h-6 flex items-center justify-center rounded-full border-4 border-slate-50 ring-1 ring-amber-200">
-                  {shortlisted.length}
-                </span>
-              )}
-            </button>
+            <button onClick={() => setViewMode('explore')} className={cn("flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-black transition-all text-sm uppercase tracking-wider", viewMode === 'explore' ? "bg-white text-blue-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}><LayoutGrid className="w-5 h-5" /> Explorateur</button>
+            <button onClick={() => setViewMode('ranking')} className={cn("flex items-center justify-center gap-2 px-8 py-3 rounded-xl font-black transition-all text-sm uppercase tracking-wider relative", viewMode === 'ranking' ? "bg-white text-blue-800 shadow-sm" : "text-slate-500 hover:text-slate-700")}><ListOrdered className="w-5 h-5" /> Mon Ranking {shortlisted.length > 0 && <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] w-6 h-6 flex items-center justify-center rounded-full border-4 border-slate-50 ring-1 ring-amber-200">{shortlisted.length}</span>}</button>
           </div>
         </nav>
 
         {viewMode === 'explore' ? (
           <>
-            {/* Explorer KPIs */}
             <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <StatCard title="Postes Dispo" value={stats.total} icon={Briefcase} colorClass="bg-slate-900" />
               <StatCard title="Admin. Centrale" value={stats.ac} icon={Building2} colorClass="bg-blue-700" />
-              <StatCard title="Ma Sélection" value={stats.selection} icon={Trophy} colorClass="bg-amber-500" />
+              <StatCard title="Ma Sélection" value={stats.sel} icon={Trophy} colorClass="bg-amber-500" />
             </section>
 
-            {/* Filters */}
             <section className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 space-y-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-50 pb-6">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-blue-800" />
-                  <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">Paramètres de recherche</h2>
-                </div>
-                <button
-                  onClick={() => setHideTaken(!hideTaken)}
-                  className={cn(
-                    "flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all border uppercase tracking-widest",
-                    hideTaken ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50"
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2"><Filter className="w-5 h-5 text-blue-800" /><h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">Filtres Avancés</h2></div>
+                  {(envFilter.length > 0 || minFilter.length > 0 || themeFilter.length > 0 || locFilter.length > 0) && (
+                    <button onClick={() => { setEnvFilter([]); setMinFilter([]); setThemeFilter([]); setLocFilter([]); }} className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[10px] font-black uppercase hover:bg-slate-800 hover:text-white transition-all"><RotateCcw className="w-3 h-3" /> Réinitialiser</button>
                   )}
-                >
-                  {hideTaken ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  Cacher les occupés
-                </button>
+                </div>
+                <button onClick={() => setHideTaken(!hideTaken)} className={cn("flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all border uppercase tracking-widest", hideTaken ? "bg-red-50 border-red-200 text-red-600" : "bg-white border-slate-200 text-slate-400 hover:bg-slate-50")}>{hideTaken ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />} Cacher Indispo</button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Mot-Clé / Ville</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Paris, Juriste..."
-                    className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-medium"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Recherche Libre</label>
+                  <input type="text" placeholder="ID, Poste, Mots-clés..." className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-bold text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
                 </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Briefcase className="w-3 h-3" /> Environnement</label>
-                  <select
-                    className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none appearance-none cursor-pointer font-bold"
-                    value={envFilter}
-                    onChange={(e) => setEnvFilter(e.target.value)}
-                  >
-                    <option value="Tous">Tous</option>
-                    <option value="AC">Admin. Centrale</option>
-                    <option value="ATE">Admin. Territoriale</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2 md:col-span-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Ministère</label>
-                  <select className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none appearance-none cursor-pointer font-bold"
-                    value={minFilter} onChange={(e) => setMinFilter(e.target.value)}>
-                    {ministries.map(m => (
-                      <option key={m} value={m}>{m === 'Tous' ? 'Tous les Ministères' : m}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest">Thématique</label>
-                  <select className="w-full px-5 py-3.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none appearance-none cursor-pointer font-bold"
-                    value={themeFilter} onChange={(e) => setThemeFilter(e.target.value)}>
-                    {themes.map(t => (
-                      <option key={t} value={t}>{t === 'Tous' ? 'Toutes thématiques' : t}</option>
-                    ))}
-                  </select>
-                </div>
+                <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous les env." />
+                <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
+                <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
+                <MultiSelect label="Localisation" icon={MapPin} options={options.loc} selected={locFilter} onChange={setLocFilter} placeholder="Toutes localités" />
               </div>
             </section>
 
-            {/* Table */}
             <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+                <div className="flex items-center gap-2 font-black text-slate-800 text-sm uppercase tracking-widest"><LayoutGrid className="w-4 h-4" /> Résultats ({filteredData.length})</div>
+                <div className="flex items-center gap-4">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Afficher</label>
+                  <select
+                    className="bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-black border-transparent focus:ring-0 outline-none cursor-pointer"
+                    value={itemsPerPage}
+                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                  >
+                    {[10, 25, 50, 100].map(v => <option key={v} value={v}>{v} postes</option>)}
+                  </select>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/50">
                       <th className="px-6 py-5 text-center w-20">❤️</th>
-                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Détails du Poste</th>
-                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Ministère</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Détails</th>
+                      <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
                       <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest">Env.</th>
-                      <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">Session</th>
+                      <th className="px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-32">Status</th>
                       <th className="px-6 py-5 text-right w-32"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
-                    {pagedData.map((item, idx) => {
-                      const id = item.Référence;
-                      const isShortlisted = shortlisted.includes(id);
-                      const isTaken = taken.includes(id);
-                      return (
-                        <tr key={`${id}-${idx}`} className={cn(
-                          "transition-all group",
-                          isTaken && "opacity-40 grayscale bg-slate-50/50",
-                          isShortlisted && "bg-amber-50/20"
-                        )}>
-                          <td className="px-6 py-5 text-center">
-                            <button onClick={() => toggleShortlist(id)} className={cn(
-                              "transition-all hover:scale-125 active:scale-90",
-                              isShortlisted ? "text-amber-500 drop-shadow-sm" : "text-slate-200 hover:text-amber-400"
-                            )}>
-                              <Star className={cn("w-7 h-7", isShortlisted && "fill-current animate-in zoom-in-50")} />
-                            </button>
-                          </td>
-                          <td className="px-6 py-5">
-                            <div className={cn("space-y-1.5", isTaken && "line-through")}>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{id}</span>
-                                <p className="font-bold text-slate-900 line-clamp-1 group-hover:text-blue-800 transition-colors uppercase tracking-tight">{item['Intitulé du poste']}</p>
-                              </div>
-                              <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest opacity-70 italic">{item['Thématique']}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-5">
-                            <p className="text-xs font-black text-slate-800 truncate max-w-[180px]">{item['Ministère']}</p>
-                            <p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium"><MapPin className="w-3 h-3 text-slate-300" /> {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']})</p>
-                          </td>
-                          <td className="px-6 py-5 text-center">
-                            <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-                          </td>
-                          <td className="px-6 py-5 text-center">
-                            <button onClick={() => toggleTaken(id)} className={cn(
-                              "px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
-                              isTaken ? "bg-red-600 text-white shadow-lg shadow-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100"
-                            )}>
-                              {isTaken ? 'INDISPO' : 'DISPO'}
-                            </button>
-                          </td>
-                          <td className="px-6 py-5 text-right">
-                            {item['LIEN FICHE DE POSTE'] &&
-                              <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer"
-                                className="text-blue-800 hover:bg-blue-800 hover:text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100 transition-all">
-                                Fiche
-                              </a>
-                            }
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {pagedData.map((item, idx) => (
+                      <tr key={`${item.Référence}-${idx}`} className={cn("transition-all group", taken.includes(item.Référence) && "opacity-40 grayscale bg-slate-50/50", shortlisted.includes(item.Référence) && "bg-amber-50/20")}>
+                        <td className="px-6 py-5 text-center"><button onClick={() => toggleShortlist(item.Référence)} className={cn("transition-all hover:scale-125 active:scale-90", shortlisted.includes(item.Référence) ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}><Star className={cn("w-7 h-7", shortlisted.includes(item.Référence) && "fill-current animate-in zoom-in-50")} /></button></td>
+                        <td className="px-6 py-5"><div className={cn("space-y-1.5", taken.includes(item.Référence) && "line-through")}><div className="flex items-center gap-2 flex-wrap"><span className="text-[10px] font-black bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded border border-slate-200">{item.Référence}</span><p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-sm">{item['Intitulé du poste']}</p></div><p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{item['Thématique']}</p></div></td>
+                        <td className="px-6 py-5"><p className="text-xs font-black text-slate-800 truncate max-w-[180px]">{item['Ministère']}</p><p className="text-[11px] text-slate-500 flex items-center gap-1 font-medium italic"><MapPin className="w-3 h-3" /> {item['Localisation (Commune ou adresse exacte)']} ({item['Code postal']})</p></td>
+                        <td className="px-6 py-5 text-center"><Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge></td>
+                        <td className="px-6 py-5 text-center"><button onClick={() => toggleTaken(item.Référence)} className={cn("px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", taken.includes(item.Référence) ? "bg-red-600 text-white shadow-lg shadow-red-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100")}>{taken.includes(item.Référence) ? 'INDISPO' : 'DISPO'}</button></td>
+                        <td className="px-6 py-5 text-right">{item['LIEN FICHE DE POSTE'] && <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="text-blue-800 hover:bg-blue-800 hover:text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-blue-100 transition-all">Fiche</a>}</td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
-
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="p-6 bg-slate-50/50 flex items-center justify-between border-t border-slate-100">
-                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white disabled:opacity-30">Précédent</button>
+                  <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 disabled:opacity-30 flex items-center gap-2"><ChevronLeft className="w-4 h-4" /> Précédent</button>
                   <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Page {currentPage} / {totalPages}</span>
-                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white disabled:opacity-30">Suivant</button>
+                  <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 disabled:opacity-30 flex items-center gap-2">Suivant <ChevronRight className="w-4 h-4" /></button>
                 </div>
               )}
             </section>
           </>
         ) : (
-          /* Ranking Mode - Drag & Drop Content */
           <section className="space-y-6">
-            <div className="bg-amber-100/50 border border-amber-200/50 p-6 rounded-3xl flex items-center gap-6">
-              <div className="w-14 h-14 bg-amber-500 rounded-2xl text-white flex items-center justify-center rotate-3 shadow-xl shadow-amber-200">
-                <Trophy className="w-8 h-8" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-amber-950 tracking-tight italic">Mon Ranking Stratégique</h2>
-                <p className="text-amber-800/70 text-xs font-black uppercase tracking-widest">Amphi Session • Organisez vos priorités</p>
-              </div>
-            </div>
-
+            <div className="bg-amber-100/50 border border-amber-200/50 p-6 rounded-3xl flex items-center gap-6"><div className="w-14 h-14 bg-amber-500 rounded-2xl text-white flex items-center justify-center rotate-3 shadow-xl"><Trophy className="w-8 h-8" /></div><div><h2 className="text-2xl font-black text-amber-950 tracking-tight italic">Mon Ranking Stratégique</h2><p className="text-amber-800/70 text-xs font-black uppercase tracking-widest">Amphi Session • Organisez vos priorités</p></div></div>
             {rankedData.length > 0 ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-                modifiers={[restrictToVerticalAxis]}
-              >
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
                 <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-100">
-                  <SortableContext
-                    items={shortlisted}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    {rankedData.map((item, idx) => (
-                      <SortableItem
-                        key={item.Référence}
-                        id={item.Référence}
-                        item={item}
-                        index={idx}
-                        isTaken={taken.includes(item.Référence)}
-                        toggleTaken={toggleTaken}
-                        toggleShortlist={toggleShortlist}
-                      />
-                    ))}
+                  <SortableContext items={shortlisted} strategy={verticalListSortingStrategy}>
+                    {rankedData.map((item, idx) => <SortableItem key={item.Référence} id={item.Référence} item={item} index={idx} isTaken={taken.includes(item.Référence)} toggleTaken={toggleTaken} toggleShortlist={toggleShortlist} />)}
                   </SortableContext>
                 </div>
               </DndContext>
             ) : (
-              <div className="bg-white border-4 border-dashed border-slate-100 rounded-[3rem] p-20 text-center space-y-6">
-                <div className="w-24 h-24 bg-slate-50 flex items-center justify-center mx-auto rounded-full">
-                  <Star className="w-12 h-12 text-slate-200" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Ranking Vide</h3>
-                  <p className="text-slate-400 font-bold max-w-sm mx-auto text-sm uppercase tracking-widest leading-relaxed">Retournez dans l'explorateur pour ajouter vos postes coups de ❤️.</p>
-                </div>
-                <button
-                  onClick={() => setViewMode('explore')}
-                  className="px-8 py-4 bg-blue-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl shadow-blue-100"
-                >
-                  Décollage
-                </button>
-              </div>
+              <div className="bg-white border-4 border-dashed border-slate-100 rounded-[3rem] p-20 text-center space-y-6"><div className="w-24 h-24 bg-slate-50 flex items-center justify-center mx-auto rounded-full"><Star className="w-12 h-12 text-slate-200" /></div><h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter">Ranking Vide</h3><button onClick={() => setViewMode('explore')} className="px-8 py-4 bg-blue-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all">Décollage</button></div>
             )}
           </section>
         )}
 
-        {/* Real-time Charts if in explore */}
-        {viewMode === 'explore' && filteredData.length > 0 && (
-          <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100">
-            <div className="flex items-center gap-3 mb-10">
-              <BarChart3 className="w-6 h-6 text-blue-800" />
-              <h2 className="font-black text-slate-800 uppercase tracking-widest text-xs">Aperçu par Ministère (Filtré)</h2>
-            </div>
-            <div className="h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={Object.entries(filteredData.reduce((acc, curr) => {
-                  const min = curr['Ministère'] || 'Inconnu';
-                  acc[min] = (acc[min] || 0) + 1;
-                  return acc;
-                }, {})).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 10)} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#f1f5f9" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={140} tick={{ fontSize: 9, fontWeight: 900, fill: '#94a3b8' }} />
-                  <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }} />
-                  <Bar dataKey="count" radius={[0, 10, 10, 0]} barSize={25}>
-                    {COLORS.map((color, index) => <Cell key={`cell-${index}`} fill={color} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </section>
-        )}
-
-        {/* Footer info */}
-        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
-          <div className="font-black text-xl tracking-tighter text-slate-900 border-x-4 border-slate-900 px-4 py-1 flex items-center gap-3">
-            <span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">Système de Session Localisé / Sécurisé</p>
-            <p className="text-[11px] font-black text-slate-900 tracking-tighter uppercase">{new Date().toLocaleDateString('fr-FR')} • {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p>
-          </div>
+        <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-all">
+          <div className="font-black text-xl tracking-tighter text-slate-900 border-x-4 border-slate-900 px-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
+          <div className="flex flex-col items-end gap-1"><p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-widest">Système de Session • ESIRA</p><p className="text-[11px] font-black text-slate-900 tracking-tighter uppercase">{new Date().toLocaleDateString('fr-FR')} • {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</p></div>
         </footer>
-
       </div>
     </div>
   );
