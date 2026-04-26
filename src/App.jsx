@@ -305,16 +305,25 @@ export default function App() {
     reader.readAsText(f);
   };
 
-  const options = useMemo(() => ({
-    min: Array.from(new Set(data.map(i => i['Ministère'])).values()).filter(Boolean).sort(),
-    themes: Array.from(new Set(data.map(i => i['Thématique'])).values()).filter(Boolean).sort(),
-    env: ['AC', 'ATE'],
-    regions: Array.from(new Set(data.map(i => i['Région']))).filter(Boolean).sort(),
-    depts: Array.from(new Set(data.map(i => {
-      const cp = i['Code postal'];
-      return cp ? cp.substring(0, 2) : null;
-    }))).filter(Boolean).sort()
-  }), [data]);
+  const options = useMemo(() => {
+    const getOptions = (key) => {
+      const uniqueVals = Array.from(new Set(data.map(i => i[key]?.trim() || "")));
+      const hasEmpty = uniqueVals.includes("");
+      const sortedValues = uniqueVals.filter(v => v !== "").sort();
+      return hasEmpty ? [...sortedValues, "(Non renseigné)"] : sortedValues;
+    };
+
+    return {
+      min: getOptions('Ministère'),
+      themes: getOptions('Thématique'),
+      env: getOptions('Env.'),
+      regions: getOptions('Région'),
+      depts: Array.from(new Set(data.map(i => {
+        const cp = i['Code postal']?.trim();
+        return cp ? cp.substring(0, 2) : "(Non renseigné)";
+      }))).sort()
+    };
+  }, [data]);
 
   const filteredData = useMemo(() => {
     return data.filter(item => {
@@ -326,11 +335,11 @@ export default function App() {
         (item['Localisation (Commune ou adresse exacte)'] || '').toLowerCase().includes(term)
       );
 
-      const matchesEnv = envFilter.length === 0 || envFilter.includes(item['Env.']);
-      const matchesMin = minFilter.length === 0 || minFilter.includes(item['Ministère']);
-      const matchesTheme = themeFilter.length === 0 || themeFilter.includes(item['Thématique']);
-      const matchesRegion = regionFilter.length === 0 || regionFilter.includes(item['Région']);
-      const matchesDept = deptFilter.length === 0 || deptFilter.includes(item['Code postal']?.substring(0, 2));
+      const matchesEnv = envFilter.length === 0 || envFilter.includes(item['Env.']?.trim() || "(Non renseigné)");
+      const matchesMin = minFilter.length === 0 || minFilter.includes(item['Ministère']?.trim() || "(Non renseigné)");
+      const matchesTheme = themeFilter.length === 0 || themeFilter.includes(item['Thématique']?.trim() || "(Non renseigné)");
+      const matchesRegion = regionFilter.length === 0 || regionFilter.includes(item['Région']?.trim() || "(Non renseigné)");
+      const matchesDept = deptFilter.length === 0 || deptFilter.includes(item['Code postal']?.trim()?.substring(0, 2) || "(Non renseigné)");
       const matchesTaken = !hideTaken || !taken.includes(id);
 
       return matchesSearch && matchesEnv && matchesMin && matchesTheme && matchesRegion && matchesDept && matchesTaken;
