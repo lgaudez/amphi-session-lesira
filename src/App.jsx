@@ -407,9 +407,8 @@ export default function App() {
             <button onClick={() => fileInputRef.current.click()} className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session">
               <Upload className="w-5 h-5 text-slate-400 group-hover:text-blue-800" />
             </button>
-            <button onClick={exportSession} className="flex items-center gap-3 px-6 py-3 bg-blue-800 text-white rounded-2xl font-bold hover:bg-blue-900 transition-all shadow-lg shadow-blue-100">
+            <button onClick={exportSession} className="p-3 bg-blue-800 text-white rounded-2xl hover:bg-blue-900 transition-all shadow-lg shadow-blue-100 group" title="Sauvegarder la session (JSON)">
               <Download className="w-5 h-5" />
-              <span className="hidden sm:inline">Sauvegarder</span>
             </button>
           </div>
         </header>
