@@ -255,7 +255,7 @@ export default function App() {
   const [regionFilter, setRegionFilter] = useState([]);
   const [deptFilter, setDeptFilter] = useState([]);
   const [hideTaken, setHideTaken] = useState(false);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
 
   const sensors = useSensors(
@@ -436,7 +436,7 @@ export default function App() {
                     value={itemsPerPage}
                     onChange={(e) => setItemsPerPage(Number(e.target.value))}
                   >
-                    {[10, 25, 50, 100].map(v => <option key={v} value={v}>{v} postes</option>)}
+                    {[10, 25, 50, 100, 250, 500, 1000].map(v => <option key={v} value={v}>{v} postes</option>)}
                   </select>
                 </div>
               </div>
