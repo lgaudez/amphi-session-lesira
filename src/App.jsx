@@ -211,7 +211,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
       </div>
       <div className="flex-1 min-w-0 flex flex-col gap-1">
         <div className="flex items-center gap-2">
-          <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100 flex-shrink-0 tabular-nums">{id}</span>
+          <span className="text-[11px] font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
           {item['LIEN FICHE DE POSTE'] && (
             <a href={item['LIEN FICHE DE POSTE']} target="_blank" rel="noreferrer" className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0" title="Voir la fiche">
@@ -458,7 +458,7 @@ export default function App() {
                         <td className="px-6 py-5 text-center"><button onClick={() => toggleShortlist(item.Référence)} className={cn("transition-all hover:scale-125 active:scale-90", shortlisted.includes(item.Référence) ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}><Star className={cn("w-7 h-7", shortlisted.includes(item.Référence) && "fill-current animate-in zoom-in-50")} /></button></td>
                         <td className="px-6 py-5">
                           <div className={cn("flex flex-col gap-1.5", taken.includes(item.Référence) && "line-through")}>
-                            <span className="text-[9px] font-black bg-slate-50 text-slate-400 px-1.5 py-0.5 rounded border border-slate-100 w-fit tabular-nums">{item.Référence}</span>
+                            <span className="text-[11px] font-black bg-slate-100 text-slate-500 px-2 py-0.5 rounded-lg border border-slate-200 w-fit tabular-nums tracking-tight">{item.Référence}</span>
                             <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-sm leading-tight">{item['Intitulé du poste']}</p>
                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{item['Thématique']}</p>
                           </div>
