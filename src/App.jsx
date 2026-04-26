@@ -533,11 +533,13 @@ export default function App() {
         <footer className="pt-20 pb-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-8 transition-all">
           <div className="font-black text-xl tracking-tighter text-slate-900 border-l-4 border-slate-900 pl-4 py-1 flex items-center gap-3"><span className="bg-slate-900 text-white px-2 rounded">AMPHI</span> CHOICE</div>
 
-          <div className="flex flex-col items-center gap-2.5 flex-1 order-3 md:order-2 px-4 border-slate-100 md:border-x">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Propulsé par Gaudez Tech Lab</p>
-            <div className="flex items-center gap-3">
-              <img src={logoGaudez} alt="Gaudez Tech Lab" className="h-6 w-auto opacity-70 hover:opacity-100 transition-opacity" />
-              <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600/60 hover:text-blue-600 font-bold transition-colors underline decoration-blue-600/20 underline-offset-4 tracking-tight">www.gaudeztechlab.com</a>
+          <div className="flex flex-col items-center gap-2.5 flex-1 order-3 md:order-2 px-4 border-slate-100 md:border-x group/logo">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] group-hover/logo:text-blue-500 transition-colors">Propulsé par Gaudez Tech Lab</p>
+            <div className="flex items-center gap-3 transition-transform duration-300 group-hover/logo:-translate-y-1">
+              <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="block hover:scale-110 transition-transform duration-300">
+                <img src={logoGaudez} alt="Gaudez Tech Lab" className="h-6 w-auto" />
+              </a>
+              <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold transition-all underline decoration-blue-600/20 underline-offset-4 tracking-tight hover:decoration-blue-600">www.gaudeztechlab.com</a>
             </div>
           </div>
 
