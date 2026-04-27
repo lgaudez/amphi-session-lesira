@@ -786,7 +786,7 @@ export default function App() {
 
             {/* Filter Bar (Sticky) */}
             <section className={cn(
-              "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto overflow-hidden transition-all duration-300",
+              "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto md:overflow-visible transition-all duration-300",
               hasActiveFilters ? "bg-blue-50/80 backdrop-blur-md border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-white border-slate-100 shadow-sm"
             )}>
               <div className="flex items-center justify-between gap-2">
