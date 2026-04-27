@@ -258,6 +258,7 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Ic
               filteredOptions.map(opt => (
                 <div
                   key={opt}
+                  title={opt}
                   onClick={() => toggleOption(opt)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all",
