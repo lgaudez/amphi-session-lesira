@@ -737,18 +737,18 @@ export default function App() {
                       <ExternalLink className="w-3.5 h-3.5 opacity-50" />
                     </a>
                     <button
+                      onClick={() => { exportSession(); setShowActionsMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-slate-600"
+                    >
+                      <Download className="w-4 h-4 text-slate-400" />
+                      Exporter session
+                    </button>
+                    <button
                       onClick={() => { fileInputRef.current.click(); setShowActionsMenu(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-slate-600"
                     >
                       <Upload className="w-4 h-4 text-slate-400" />
                       Importer session
-                    </button>
-                    <button
-                      onClick={() => { exportSession(); setShowActionsMenu(false); }}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-slate-600"
-                    >
-                      <Download className="w-4 h-4 text-slate-400" />
-                      Sauvegarder
                     </button>
                   </div>
                 </>
@@ -940,7 +940,7 @@ export default function App() {
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
                       <th className="hidden md:table-cell px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Env.</th>
                       <th className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 md:w-32">Status</th>
-                      <th className="px-2 md:px-6 py-4 md:py-5 text-right w-10 md:w-32"></th>
+                      <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right w-10 md:w-32"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -997,7 +997,7 @@ export default function App() {
                               <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
                             </button>
                           </td>
-                          <td className="px-2 md:px-6 py-4 md:py-5 text-right">
+                          <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
                             {item['Lien vers la fiche de poste'] && (
                               <a
                                 href={item['Lien vers la fiche de poste']}
