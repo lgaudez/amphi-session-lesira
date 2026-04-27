@@ -809,6 +809,23 @@ export default function App() {
                   )}
                 </div>
 
+                {/* Desktop search field — inline with controls */}
+                <div className="hidden md:flex items-center flex-1 relative max-w-xs">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Rechercher ID, Poste..."
+                    className="w-full pl-9 pr-4 py-2 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-xl transition-all outline-none font-bold text-xs"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     onClick={() => setHideTaken(!hideTaken)}
@@ -851,11 +868,7 @@ export default function App() {
 
               {/* Desktop Filters Inline */}
               <div className="hidden md:block pt-6 border-t border-slate-50">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Recherche Lib.</label>
-                    <input type="text" placeholder="ID, Poste..." className="w-full px-4 py-2.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-xl transition-all outline-none font-bold text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
                   <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
                   <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
                   <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
