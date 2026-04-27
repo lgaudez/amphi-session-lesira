@@ -24,8 +24,27 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
-  RotateCcw
+  RotateCcw,
+  Info
 } from 'lucide-react';
+
+const Github = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.28 1.15-.28 2.35 0 3.5-.73 1.02-1.08 2.25-1 3.5 0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4" />
+    <path d="M9 18c-4.51 2-5-2-7-2" />
+  </svg>
+);
 import {
   BarChart,
   Bar,
@@ -40,7 +59,8 @@ import {
   DndContext,
   closestCenter,
   KeyboardSensor,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -204,8 +224,13 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist }
       !isDragging && "hover:bg-slate-50/50",
       isTaken && "opacity-50 grayscale bg-slate-50"
     )}>
-      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-2 text-slate-300 hover:text-slate-600 transition-colors">
-        <GripVertical className="w-5 h-5" />
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing p-3 -m-1 text-slate-300 hover:text-slate-600 transition-colors touch-none touch-manipulation"
+        style={{ touchAction: 'none' }}
+      >
+        <GripVertical className="w-5 h-5 md:w-4 md:h-4" />
       </div>
       <div className="flex items-center justify-center w-8 shrink-0">
         <span className="text-xl font-black text-slate-300 group-hover:text-slate-500 transition-colors">{index + 1}</span>
@@ -242,9 +267,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
-  const [viewMode, setViewMode] = useState('explore');
-
-  // Persistence States
+  const [viewMode, setViewMode] = useState('explore'); // 'explore' or 'ranking'
+  const [showRankingHelp, setShowRankingHelp] = useState(false);
   const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
   const [taken, setTaken] = useState(() => JSON.parse(localStorage.getItem('ira_taken') || '[]'));
 
@@ -260,7 +284,8 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
@@ -527,7 +552,52 @@ export default function App() {
           </>
         ) : (
           <section className="space-y-6">
-            <div className="bg-amber-100/50 border border-amber-200/50 p-6 rounded-3xl flex items-center gap-6"><div className="w-14 h-14 bg-amber-500 rounded-2xl text-white flex items-center justify-center rotate-3 shadow-xl"><Trophy className="w-8 h-8" /></div><div><h2 className="text-2xl font-black text-amber-950 tracking-tight italic">Mon Ranking Stratégique</h2><p className="text-amber-800/70 text-xs font-black uppercase tracking-widest">Amphi Session • Organisez vos priorités</p></div></div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-4 bg-amber-100/50 p-6 rounded-[2.5rem] relative overflow-hidden group">
+                <div className="w-12 h-12 bg-amber-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-amber-200">
+                  <Trophy className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-amber-900 tracking-tight">Mon Ranking Stratégique</h2>
+                  <p className="text-[10px] text-amber-700 font-extrabold uppercase tracking-widest">Amphi Session • Organisez vos priorités</p>
+                </div>
+                <button
+                  onClick={() => setShowRankingHelp(!showRankingHelp)}
+                  className={cn("ml-auto p-2 rounded-xl transition-all flex items-center gap-2 font-bold text-[11px] uppercase tracking-wider", showRankingHelp ? "bg-amber-500 text-white shadow-md shadow-amber-200" : "text-amber-600 hover:bg-amber-200/50")}
+                >
+                  <Info className="w-5 h-5" />
+                  <span className="hidden sm:inline">{showRankingHelp ? "Fermer" : "Aide"}</span>
+                </button>
+              </div>
+
+              {showRankingHelp && (
+                <div className="bg-white border-2 border-amber-200 rounded-[2rem] p-6 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 shadow-sm"><GripVertical className="w-5 h-5 text-slate-400" /></div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-wide">Réordonner</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Cliquez et faites glisser le poste pour changer votre ordre de priorité stratégique.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="bg-blue-50 p-2 rounded-xl border border-blue-100 shadow-sm"><CheckCircle2 className="w-5 h-5 text-blue-800" /></div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-wide">Marquer comme "Pris"</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Cochez cette case lorsqu'un poste est choisi par un autre candidat lors de l'amphi.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-4">
+                      <div className="bg-red-50 p-2 rounded-xl border border-red-100 shadow-sm"><X className="w-5 h-5 text-red-400" /></div>
+                      <div>
+                        <p className="text-xs font-black text-slate-900 uppercase tracking-wide">Retirer</p>
+                        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">Retire définitivement le poste de votre sélection stratégique.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             {rankedData.length > 0 ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
                 <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-100">
@@ -553,6 +623,15 @@ export default function App() {
               </a>
               <a href="https://www.gaudeztechlab.com" target="_blank" rel="noreferrer" className="text-[10px] text-blue-600 font-bold transition-all underline decoration-blue-600/20 underline-offset-4 tracking-tight hover:decoration-blue-600">www.gaudeztechlab.com</a>
             </div>
+            <a
+              href="https://github.com/lgaudez/amphi-session-lesira"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 text-[9px] text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1.5 group/github"
+            >
+              <Github className="w-3 h-3 opacity-50 group-hover/github:opacity-100 transition-opacity" />
+              <span>Une question / un bug ? Voir sur GitHub</span>
+            </a>
           </div>
 
           <div className="flex flex-col md:items-end items-center gap-1 order-2 md:order-3">
