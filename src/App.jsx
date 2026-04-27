@@ -95,6 +95,25 @@ const getPostSheetLink = (item) =>
   item?.['LIEN FICHE DE POSTE'] ||
   '';
 
+const hashString = (value = '') => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+};
+
+const getThemeBadgeStyle = (theme = '') => {
+  const normalized = (theme || 'non-renseigne').trim().toLowerCase();
+  const hue = hashString(normalized) % 360;
+
+  return {
+    backgroundColor: `hsl(${hue} 88% 94%)`,
+    color: `hsl(${hue} 45% 30%)`,
+    borderColor: `hsl(${hue} 65% 80%)`
+  };
+};
+
 // --- Components ---
 
 const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
@@ -796,7 +815,7 @@ export default function App() {
             {/* Filter Bar (Sticky) */}
             <section className={cn(
               "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto md:overflow-visible transition-all duration-300",
-              hasActiveFilters ? "bg-slate-50/30 border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-slate-50/30 border-slate-100 shadow-sm"
+              hasActiveFilters ? "bg-white border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-white border-slate-100 shadow-sm"
             )}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -961,8 +980,8 @@ export default function App() {
               </div>
             )}
 
-            <section className="bg-slate-50/30 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-white">
                 <div className="flex items-center gap-2 font-black text-slate-800 text-xs md:text-sm uppercase tracking-widest">
                   <LayoutGrid className="w-4 h-4" />
                   <span>Résultats ({filteredData.length})</span>
@@ -985,7 +1004,6 @@ export default function App() {
                       <th className="px-2 md:px-6 py-4 md:py-5 text-center w-10 md:w-20">❤️</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Poste</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
-                      <th className="hidden md:table-cell px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Env.</th>
                       <th className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 md:w-32">Status</th>
                       <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest w-10 md:w-24">Fiche</th>
                     </tr>
@@ -993,6 +1011,7 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100">
                     {pagedData.map((item, idx) => {
                       const postSheetLink = getPostSheetLink(item);
+                      const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
                       return (
                       <React.Fragment key={`${item.Référence}-${idx}`}>
                         <tr
@@ -1012,6 +1031,13 @@ export default function App() {
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] md:text-[11px] font-black bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200 w-fit tabular-nums tracking-tight">{item.Référence}</span>
                                 <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="md:hidden !px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
+                                <span
+                                  className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-bold max-w-[220px]"
+                                  style={getThemeBadgeStyle(themeLabel)}
+                                  title={themeLabel}
+                                >
+                                  <span className="truncate">{themeLabel}</span>
+                                </span>
                                 {postSheetLink && (
                                   <a
                                     href={postSheetLink}
@@ -1026,17 +1052,18 @@ export default function App() {
                                 )}
                               </div>
                               <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
-                              <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{item['Thématique']}</p>
+                              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-widest truncate md:hidden">{item['Thématique']}</p>
                             </div>
                           </td>
                           <td className="px-2 md:px-6 py-4 md:py-5">
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
                                 <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']}{item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}</span>
-                              </p>
-                              <p className="hidden md:flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
-                                <span>{item['Région']}</span>
+                                <span className="truncate">
+                                  {item['Localisation (Commune ou adresse exacte)']}
+                                  {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+                                  <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
+                                </span>
                               </p>
                               <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">
                                 <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300 md:text-slate-400" />
@@ -1044,22 +1071,21 @@ export default function App() {
                               </p>
                             </div>
                           </td>
-                          <td className="hidden md:table-cell px-6 py-5 text-center">
-                            <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-                          </td>
-                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
-                              className={cn(
-                                "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
-                                taken.includes(item.Référence)
-                                  ? "bg-blue-800 border-blue-800 text-white"
-                                  : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400"
-                              )}
-                              title={taken.includes(item.Référence) ? "Remettre en disponible" : "Marquer comme pris"}
-                            >
-                              <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
-                            </button>
+                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
+                                className={cn(
+                                  "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+                                  taken.includes(item.Référence)
+                                    ? "bg-blue-800 border-blue-800 text-white"
+                                    : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400"
+                                )}
+                                title={taken.includes(item.Référence) ? "Remettre en disponible" : "Marquer comme pris"}
+                              >
+                                <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
+                              </button>
+                            </div>
                           </td>
                           <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
                             {postSheetLink && (
