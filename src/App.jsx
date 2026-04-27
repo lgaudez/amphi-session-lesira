@@ -850,7 +850,7 @@ export default function App() {
 
               {/* Desktop Filters Inline */}
               <div className="hidden md:block pt-6 border-t border-slate-50">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 md:gap-6">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Recherche Lib.</label>
                     <input type="text" placeholder="ID, Poste..." className="w-full px-4 py-2.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-xl transition-all outline-none font-bold text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -858,10 +858,8 @@ export default function App() {
                   <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
                   <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
                   <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                  <MultiSelect label="Lieu / Région" icon={MapPin} options={[...options.regions, ...options.depts]} selected={[...regionFilter, ...deptFilter]} onChange={(vals) => {
-                    setRegionFilter(vals.filter(v => options.regions.includes(v)));
-                    setDeptFilter(vals.filter(v => options.depts.includes(v)));
-                  }} placeholder="Toutes zones" />
+                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
+                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
                 </div>
               </div>
             </section>
