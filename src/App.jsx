@@ -1188,7 +1188,7 @@ export default function App() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
+                                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
                                 title="Voir la fiche"
                               >
                                 <ExternalLink className="w-5 h-5" />
