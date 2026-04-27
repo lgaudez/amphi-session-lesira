@@ -810,18 +810,18 @@ export default function App() {
                 </div>
 
                 {/* Desktop search field — inline with controls */}
-                <div className="hidden md:flex items-center flex-1 relative max-w-xs">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                <div className="hidden md:flex items-center flex-1 relative max-w-sm">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 pointer-events-none" />
                   <input
                     type="text"
-                    placeholder="Rechercher ID, Poste..."
-                    className="w-full pl-9 pr-4 py-2 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-xl transition-all outline-none font-bold text-xs"
+                    placeholder="Rechercher ID, Intitulé du poste..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-slate-200 hover:border-blue-300 focus:border-blue-500 focus:shadow-md rounded-xl transition-all outline-none font-bold text-xs shadow-sm"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
                   {search && (
-                    <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-600">
-                      <X className="w-3.5 h-3.5" />
+                    <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
+                      <X className="w-3 h-3 text-slate-500" />
                     </button>
                   )}
                 </div>
@@ -984,7 +984,10 @@ export default function App() {
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
                                 <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']} <span className="text-[8px] md:text-[10px] text-slate-400 font-normal ml-0.5">• {item['Région']}</span></span>
+                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']}{item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}</span>
+                              </p>
+                              <p className="hidden md:flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
+                                <span>{item['Région']}</span>
                               </p>
                               <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">
                                 <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300 md:text-slate-400" />
