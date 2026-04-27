@@ -647,30 +647,30 @@ export default function App() {
       {showDashboard && <StatsView data={data} stats={stats} onClose={() => setShowDashboard(false)} />}
 
       <div className="max-w-[1400px] mx-auto space-y-4 md:space-y-8 pt-4 md:pt-10">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-8 md:h-10 bg-blue-800 rounded-full" />
-              <h1 className="text-2xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-2 md:gap-3">
-                Amphi Session <span className="bg-blue-800 text-white px-2 py-0.5 md:px-3 md:py-1 rounded-xl text-lg md:text-2xl">PRO</span>
+        <header className="flex justify-between items-start md:items-center gap-4 md:gap-6">
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-1.5 h-6 md:w-2 md:h-10 bg-blue-800 rounded-full shrink-0" />
+              <h1 className="text-xl md:text-4xl font-black text-slate-900 tracking-tight flex items-center gap-2 md:gap-3 truncate">
+                Amphi Session <span className="bg-blue-800 text-white px-2 py-0.5 md:px-3 md:py-1 rounded-lg md:rounded-xl text-sm md:text-2xl shrink-0">PRO</span>
               </h1>
             </div>
-            <p className="text-slate-400 font-bold uppercase tracking-widest text-[10px] ml-5 flex flex-wrap items-center gap-x-2 gap-y-1">
-              <span>Outil d'aide au choix • ESIRA</span>
+            <p className="text-slate-400 font-bold uppercase tracking-widest text-[8px] md:text-[10px] ml-3 md:ml-5 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="truncate">Outil d'aide au choix • ESIRA</span>
               <span className="opacity-20 hidden sm:inline">•</span>
               <a
                 href="https://www.gaudeztechlab.com"
                 target="_blank"
                 rel="noreferrer"
-                className="transition-all duration-300 flex items-center gap-1.5 group/hbadge hover:text-blue-600"
+                className="transition-all duration-300 flex items-center gap-1.5 group/hbadge hover:text-blue-600 shrink-0"
               >
                 <span className="opacity-40 group-hover/hbadge:opacity-100 transition-all duration-300 group-hover/hbadge:-translate-x-1">Built by</span>
-                <img src={logoGaudez} alt="" className="h-4 w-auto opacity-80 group-hover/hbadge:opacity-100 transition-all duration-500 group-hover/hbadge:scale-125 group-hover/hbadge:rotate-[5deg] drop-shadow-sm" />
+                <img src={logoGaudez} alt="" className="h-3 md:h-4 w-auto opacity-80 group-hover/hbadge:opacity-100 transition-all duration-500 group-hover/hbadge:scale-125 group-hover/hbadge:rotate-[5deg] drop-shadow-sm" />
                 <span className="group-hover/hbadge:translate-x-1 transition-all duration-300">Gaudez Tech Lab</span>
               </a>
             </p>
           </div>
-          <div className="flex items-center gap-2 self-start md:self-auto ml-1 md:ml-0 mt-2 md:mt-0">
+          <div className="flex items-center gap-2 shrink-0 md:mt-0">
             {/* Desktop Actions */}
             <div className="hidden md:flex items-center gap-2">
               <a
@@ -707,16 +707,15 @@ export default function App() {
             <div className="md:hidden relative">
               <button
                 onClick={() => setShowActionsMenu(!showActionsMenu)}
-                className="p-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+                className="p-2 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center justify-center w-10 h-10"
               >
-                <MoreVertical className="w-4 h-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Menu</span>
+                <MoreVertical className="w-5 h-5" />
               </button>
 
               {showActionsMenu && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
-                  <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 origin-top-left">
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 origin-top-right">
                     <button
                       onClick={() => { setShowDashboard(true); setShowActionsMenu(false); }}
                       className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 rounded-xl transition-colors font-black text-[11px] uppercase tracking-widest text-blue-700"
@@ -938,7 +937,7 @@ export default function App() {
                     <tr className="bg-slate-50/50">
                       <th className="px-2 md:px-6 py-4 md:py-5 text-center w-10 md:w-20">❤️</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Poste</th>
-                      <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-[100px] md:w-auto">Lieu / Min.</th>
+                      <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
                       <th className="hidden md:table-cell px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Env.</th>
                       <th className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 md:w-32">Status</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-right w-10 md:w-32"></th>
