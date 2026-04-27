@@ -1014,7 +1014,7 @@ export default function App() {
                         </tr>
                         {expandedIds.has(item.Référence) && (
                           <tr className="md:hidden">
-                            <td colSpan="4" className="p-0 border-none">
+                            <td colSpan="3" className="p-0 border-none">
                               <JobDetailCard item={item} isExpanded={true} onToggle={toggleExpand} />
                             </td>
                           </tr>
