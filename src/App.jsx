@@ -24,7 +24,6 @@ import {
   GripVertical,
   ChevronRight,
   ChevronLeft,
-  Check,
   RotateCcw,
   Info,
   MoreVertical
@@ -225,6 +224,22 @@ const ThemeBadge = ({ theme, className }) => {
   );
 };
 
+const AvailabilityButton = ({ isTaken, onClick, className }) => (
+  <button
+    onClick={onClick}
+    className={cn(
+      "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+      isTaken
+        ? "bg-blue-800 border-blue-800 text-white"
+        : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400",
+      className
+    )}
+    title={isTaken ? "Remettre en disponible" : "Marquer comme pris"}
+  >
+    <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
+  </button>
+);
+
 const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -386,8 +401,8 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
 
         {!isExpanded && (
           <div className="flex flex-col gap-0.5">
-            <span className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-600 font-medium truncate">
-              <Building2 className="w-2.5 h-2.5 text-slate-300 md:text-slate-400" />
+            <span className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
+              <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 text-slate-300 md:text-slate-400" />
               <span className="truncate">{item['Ministère']}</span>
             </span>
             <span className="flex items-center gap-1 text-[9px] md:text-xs font-bold text-blue-700 md:text-slate-700 truncate leading-tight">
@@ -406,13 +421,11 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
 
       {/* Right side: Buttons stacked */}
       <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:flex-row md:border-l-0 md:gap-2">
-        <button
+        <AvailabilityButton
+          isTaken={isTaken}
           onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
-          className={cn("p-1.5 md:p-2 rounded-lg transition-all border", isTaken ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-300 border-slate-200 hover:text-blue-600 hover:border-blue-200")}
-          title={isTaken ? "Marquer comme disponible" : "Marquer comme pris"}
-        >
-          <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
-        </button>
+          className="w-8 h-8 md:w-10 md:h-10"
+        />
         <button
           onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
           className="p-1.5 md:p-2 text-amber-500 hover:text-red-500 transition-all"
@@ -1154,26 +1167,18 @@ export default function App() {
                                   <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
                                 </span>
                               </p>
-                              <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-600 font-medium truncate">
-                                <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300 md:text-slate-400" />
+                              <p className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
+                                <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 text-slate-300 md:text-slate-400" />
                                 <span className="truncate">{item['Ministère']}</span>
                               </p>
                             </div>
                           </td>
                           <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
                             <div className="flex justify-center">
-                              <button
+                              <AvailabilityButton
+                                isTaken={taken.includes(item.Référence)}
                                 onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
-                                className={cn(
-                                  "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
-                                  taken.includes(item.Référence)
-                                    ? "bg-blue-800 border-blue-800 text-white"
-                                    : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400"
-                                )}
-                                title={taken.includes(item.Référence) ? "Remettre en disponible" : "Marquer comme pris"}
-                              >
-                                <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
-                              </button>
+                              />
                             </div>
                           </td>
                           <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
@@ -1183,7 +1188,7 @@ export default function App() {
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
+                                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
                                 title="Voir la fiche"
                               >
                                 <ExternalLink className="w-5 h-5" />
