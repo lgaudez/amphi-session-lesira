@@ -26,7 +26,8 @@ import {
   ChevronLeft,
   Check,
   RotateCcw,
-  Info
+  Info,
+  MoreVertical
 } from 'lucide-react';
 
 const Github = (props) => (
@@ -476,6 +477,7 @@ export default function App() {
   const [showRankingHelp, setShowRankingHelp] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showMobileStats, setShowMobileStats] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
   const [taken, setTaken] = useState(() => JSON.parse(localStorage.getItem('ira_taken') || '[]'));
 
@@ -668,34 +670,90 @@ export default function App() {
               </a>
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2 self-start md:self-auto ml-1 md:ml-0 mt-2 md:mt-0">
-            <a
-              href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-3 bg-emerald-600 text-white rounded-xl md:rounded-2xl hover:bg-emerald-700 transition-all font-bold text-xs md:text-sm shadow-md md:shadow-lg shadow-emerald-100"
-              title="Voir le Spreadsheet Google"
-            >
-              <FileText className="w-4 h-4 md:w-5 md:h-5" />
-              <span className="hidden sm:inline">Source Spreadsheet</span>
-              <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-70" />
-            </a>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDashboard(true)}
-                className="p-2 md:p-3 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group flex items-center gap-1.5"
-                title="Voir le tableau de bord"
+          <div className="flex items-center gap-2 self-start md:self-auto ml-1 md:ml-0 mt-2 md:mt-0">
+            {/* Desktop Actions */}
+            <div className="hidden md:flex items-center gap-2">
+              <a
+                href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-3 bg-emerald-600 text-white rounded-xl md:rounded-2xl hover:bg-emerald-700 transition-all font-bold text-xs md:text-sm shadow-md md:shadow-lg shadow-emerald-100"
+                title="Voir le Spreadsheet Google"
               >
-                <PieChart className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
-                <span className="hidden sm:inline font-bold uppercase tracking-widest text-[9px] md:text-[10px]">Tableau de Bord</span>
+                <FileText className="w-4 h-4 md:w-5 md:h-5" />
+                <span>Source Spreadsheet</span>
+                <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-70" />
+              </a>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowDashboard(true)}
+                  className="p-2 md:p-3 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group flex items-center gap-1.5"
+                  title="Voir le tableau de bord"
+                >
+                  <PieChart className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                  <span className="font-bold uppercase tracking-widest text-[10px]">Tableau de Bord</span>
+                </button>
+                <input type="file" ref={fileInputRef} onChange={importSession} className="hidden" accept=".json" />
+                <button onClick={() => fileInputRef.current.click()} className="p-2 md:p-3 bg-white border border-slate-200 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session (JSON)">
+                  <Upload className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-blue-800" />
+                </button>
+                <button onClick={exportSession} className="p-2 md:p-3 bg-blue-800 text-white rounded-xl md:rounded-2xl hover:bg-blue-900 transition-all shadow-md md:shadow-lg shadow-blue-100 group" title="Sauvegarder la session (JSON)">
+                  <Download className="w-4 h-4 md:w-5 md:h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Mobile Actions Menu */}
+            <div className="md:hidden relative">
+              <button
+                onClick={() => setShowActionsMenu(!showActionsMenu)}
+                className="p-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+              >
+                <MoreVertical className="w-4 h-4" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Menu</span>
               </button>
-              <input type="file" ref={fileInputRef} onChange={importSession} className="hidden" accept=".json" />
-              <button onClick={() => fileInputRef.current.click()} className="p-2 md:p-3 bg-white border border-slate-200 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session (JSON)">
-                <Upload className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-blue-800" />
-              </button>
-              <button onClick={exportSession} className="p-2 md:p-3 bg-blue-800 text-white rounded-xl md:rounded-2xl hover:bg-blue-900 transition-all shadow-md md:shadow-lg shadow-blue-100 group" title="Sauvegarder la session (JSON)">
-                <Download className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
+
+              {showActionsMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowActionsMenu(false)} />
+                  <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 z-50 flex flex-col gap-1 animate-in fade-in slide-in-from-top-2 origin-top-left">
+                    <button
+                      onClick={() => { setShowDashboard(true); setShowActionsMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-slate-50 rounded-xl transition-colors font-black text-[11px] uppercase tracking-widest text-blue-700"
+                    >
+                      <PieChart className="w-4 h-4" />
+                      Tableau de bord
+                    </button>
+                    <div className="h-px w-full bg-slate-100 my-1" />
+                    <a
+                      href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-emerald-700"
+                    >
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-4 h-4 text-emerald-600" />
+                        Spreadsheet
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 opacity-50" />
+                    </a>
+                    <button
+                      onClick={() => { fileInputRef.current.click(); setShowActionsMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-slate-600"
+                    >
+                      <Upload className="w-4 h-4 text-slate-400" />
+                      Importer session
+                    </button>
+                    <button
+                      onClick={() => { exportSession(); setShowActionsMenu(false); }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 rounded-xl transition-colors font-bold text-[11px] uppercase tracking-widest text-slate-600"
+                    >
+                      <Download className="w-4 h-4 text-slate-400" />
+                      Sauvegarder
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </header>
