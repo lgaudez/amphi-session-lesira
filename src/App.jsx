@@ -90,6 +90,11 @@ const COLORS = [
   '#000091', '#E1000F', '#00AC8E', '#FFB800', '#718096', '#ED8936', '#4299E1', '#9F7AEA'
 ];
 
+const getPostSheetLink = (item) =>
+  item?.['Lien vers la fiche de poste'] ||
+  item?.['LIEN FICHE DE POSTE'] ||
+  '';
+
 // --- Components ---
 
 const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
@@ -106,6 +111,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
 
 const JobDetailCard = ({ item, isExpanded, onToggle }) => {
   if (!isExpanded) return null;
+  const postSheetLink = getPostSheetLink(item);
 
   return (
     <div className="px-4 py-8 bg-slate-50 border-t-2 border-blue-100 animate-in fade-in slide-in-from-top-2">
@@ -154,9 +160,9 @@ const JobDetailCard = ({ item, isExpanded, onToggle }) => {
           </div>
         </div>
 
-        {item['Lien vers la fiche de poste'] && (
+        {postSheetLink && (
           <a
-            href={item['Lien vers la fiche de poste']}
+            href={postSheetLink}
             target="_blank"
             rel="noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -258,6 +264,7 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Ic
               filteredOptions.map(opt => (
                 <div
                   key={opt}
+                  title={opt}
                   onClick={() => toggleOption(opt)}
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-all",
@@ -284,6 +291,7 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Ic
 const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, isExpanded, onToggle }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
+  const postSheetLink = getPostSheetLink(item);
 
   return (
     <div
@@ -316,9 +324,9 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
         <div className="flex items-center gap-2">
           <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-          {!isExpanded && item['LIEN FICHE DE POSTE'] && (
+          {!isExpanded && postSheetLink && (
             <a
-              href={item['LIEN FICHE DE POSTE']}
+              href={postSheetLink}
               target="_blank"
               rel="noreferrer"
               onClick={(e) => e.stopPropagation()}
@@ -476,6 +484,7 @@ export default function App() {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showRankingHelp, setShowRankingHelp] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showDesktopFilters, setShowDesktopFilters] = useState(true);
   const [showMobileStats, setShowMobileStats] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
@@ -677,12 +686,12 @@ export default function App() {
                 href="https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/edit"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-3 bg-emerald-600 text-white rounded-xl md:rounded-2xl hover:bg-emerald-700 transition-all font-bold text-xs md:text-sm shadow-md md:shadow-lg shadow-emerald-100"
+                className="flex items-center gap-1.5 md:gap-2 px-3 py-2 md:px-4 md:py-3 bg-white border border-slate-200 text-slate-700 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all font-bold text-xs md:text-sm shadow-sm group"
                 title="Voir le Spreadsheet Google"
               >
-                <FileText className="w-4 h-4 md:w-5 md:h-5" />
+                <FileText className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
                 <span>Source Spreadsheet</span>
-                <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 opacity-70" />
+                <ExternalLink className="w-3.5 h-3.5 md:w-4 md:h-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
               </a>
               <div className="flex gap-2">
                 <button
@@ -697,8 +706,8 @@ export default function App() {
                 <button onClick={() => fileInputRef.current.click()} className="p-2 md:p-3 bg-white border border-slate-200 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Importer une session (JSON)">
                   <Upload className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-blue-800" />
                 </button>
-                <button onClick={exportSession} className="p-2 md:p-3 bg-blue-800 text-white rounded-xl md:rounded-2xl hover:bg-blue-900 transition-all shadow-md md:shadow-lg shadow-blue-100 group" title="Sauvegarder la session (JSON)">
-                  <Download className="w-4 h-4 md:w-5 md:h-5" />
+                <button onClick={exportSession} className="p-2 md:p-3 bg-white border border-slate-200 rounded-xl md:rounded-2xl hover:bg-slate-50 transition-all shadow-sm group" title="Sauvegarder la session (JSON)">
+                  <Download className="w-4 h-4 md:w-5 md:h-5 text-slate-400 group-hover:text-blue-800" />
                 </button>
               </div>
             </div>
@@ -786,8 +795,8 @@ export default function App() {
 
             {/* Filter Bar (Sticky) */}
             <section className={cn(
-              "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto overflow-hidden transition-all duration-300",
-              hasActiveFilters ? "bg-blue-50/80 backdrop-blur-md border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-white border-slate-100 shadow-sm"
+              "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto md:overflow-visible transition-all duration-300",
+              hasActiveFilters ? "bg-slate-50/30 border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-slate-50/30 border-slate-100 shadow-sm"
             )}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -808,7 +817,7 @@ export default function App() {
                   )}
                 </div>
 
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 ml-auto">
                   <button
                     onClick={() => setHideTaken(!hideTaken)}
                     className={cn(
@@ -826,7 +835,7 @@ export default function App() {
                   <button
                     onClick={() => setShowFilters(!showFilters)}
                     className={cn(
-                      "px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2 text-[9px] font-black uppercase shadow-xl shrink-0 relative",
+                      "md:hidden px-4 py-2.5 rounded-xl border transition-all flex items-center gap-2 text-[9px] font-black uppercase shadow-xl shrink-0 relative",
                       showFilters
                         ? "bg-blue-800 text-white border-blue-900 ring-4 ring-blue-100"
                         : hasActiveFilters
@@ -845,23 +854,61 @@ export default function App() {
                       </span>
                     )}
                   </button>
+
+                  <button
+                    onClick={() => setShowDesktopFilters(!showDesktopFilters)}
+                    className={cn(
+                      "hidden md:flex px-4 py-2.5 rounded-xl border transition-all items-center gap-2 text-[9px] font-black uppercase shadow-xl shrink-0 relative",
+                      showDesktopFilters
+                        ? "bg-blue-800 text-white border-blue-900 ring-4 ring-blue-100"
+                        : hasActiveFilters
+                          ? "bg-blue-700 text-white border-blue-900 shadow-blue-900/20"
+                          : "bg-white border-slate-200 text-blue-800"
+                    )}
+                    title={showDesktopFilters ? "Masquer les filtres" : "Afficher les filtres"}
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>Filtrer</span>
+                    {filterCount > 0 && (
+                      <span className={cn(
+                        "absolute -top-2 -right-2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-lg border-2",
+                        showDesktopFilters ? "bg-white text-blue-800 border-blue-800" : "bg-white text-blue-800 border-blue-700"
+                      )}>
+                        {filterCount}
+                      </span>
+                    )}
+                  </button>
                 </div>
               </div>
 
               {/* Desktop Filters Inline */}
-              <div className="hidden md:block pt-6 border-t border-slate-50">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1"><Search className="w-3 h-3" /> Recherche Lib.</label>
-                    <input type="text" placeholder="ID, Poste..." className="w-full px-4 py-2.5 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-xl transition-all outline-none font-bold text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <div className={cn("hidden md:block pt-6 border-t border-slate-50", !showDesktopFilters && "md:hidden")}>
+                <div className="grid grid-cols-3 gap-4 md:gap-6">
+                  <div className="space-y-2 relative">
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-1 tracking-widest flex items-center gap-1">
+                      <Search className="w-3 h-3" /> Recherche ID / Poste
+                    </label>
+                    <div className="relative">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="ID en premier (ex: agri-AC-01)"
+                        className="w-full pl-10 pr-9 py-3 bg-slate-100 border-2 border-transparent hover:bg-slate-200/50 focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-medium text-sm placeholder:font-medium"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                      {search && (
+                        <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
+                          <X className="w-3 h-3 text-slate-500" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
                   <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
                   <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                  <MultiSelect label="Lieu / Région" icon={MapPin} options={[...options.regions, ...options.depts]} selected={[...regionFilter, ...deptFilter]} onChange={(vals) => {
-                    setRegionFilter(vals.filter(v => options.regions.includes(v)));
-                    setDeptFilter(vals.filter(v => options.depts.includes(v)));
-                  }} placeholder="Toutes zones" />
+                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
+                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
                 </div>
               </div>
             </section>
@@ -914,7 +961,7 @@ export default function App() {
               </div>
             )}
 
-            <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+            <section className="bg-slate-50/30 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
               <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
                 <div className="flex items-center gap-2 font-black text-slate-800 text-xs md:text-sm uppercase tracking-widest">
                   <LayoutGrid className="w-4 h-4" />
@@ -940,11 +987,13 @@ export default function App() {
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
                       <th className="hidden md:table-cell px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Env.</th>
                       <th className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 md:w-32">Status</th>
-                      <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right w-10 md:w-32"></th>
+                      <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest w-10 md:w-24">Fiche</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {pagedData.map((item, idx) => (
+                    {pagedData.map((item, idx) => {
+                      const postSheetLink = getPostSheetLink(item);
+                      return (
                       <React.Fragment key={`${item.Référence}-${idx}`}>
                         <tr
                           onClick={() => toggleExpand(item.Référence)}
@@ -963,6 +1012,18 @@ export default function App() {
                               <div className="flex items-center gap-1.5">
                                 <span className="text-[9px] md:text-[11px] font-black bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200 w-fit tabular-nums tracking-tight">{item.Référence}</span>
                                 <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="md:hidden !px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
+                                {postSheetLink && (
+                                  <a
+                                    href={postSheetLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0 md:hidden"
+                                    title="Voir la fiche"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+                                )}
                               </div>
                               <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
                               <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{item['Thématique']}</p>
@@ -972,7 +1033,10 @@ export default function App() {
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
                                 <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']} <span className="text-[8px] md:text-[10px] text-slate-400 font-normal ml-0.5">• {item['Région']}</span></span>
+                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']}{item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}</span>
+                              </p>
+                              <p className="hidden md:flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
+                                <span>{item['Région']}</span>
                               </p>
                               <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">
                                 <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300 md:text-slate-400" />
@@ -998,9 +1062,9 @@ export default function App() {
                             </button>
                           </td>
                           <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
-                            {item['Lien vers la fiche de poste'] && (
+                            {postSheetLink && (
                               <a
-                                href={item['Lien vers la fiche de poste']}
+                                href={postSheetLink}
                                 target="_blank"
                                 rel="noreferrer"
                                 onClick={(e) => e.stopPropagation()}
@@ -1020,7 +1084,7 @@ export default function App() {
                           </tr>
                         )}
                       </React.Fragment>
-                    ))}
+                    )})}
                   </tbody>
                 </table>
               </div>
