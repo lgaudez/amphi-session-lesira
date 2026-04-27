@@ -95,6 +95,25 @@ const getPostSheetLink = (item) =>
   item?.['LIEN FICHE DE POSTE'] ||
   '';
 
+const hashString = (value = '') => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+};
+
+const getThemeBadgeStyle = (theme = '') => {
+  const normalized = (theme || 'non-renseigne').trim().toLowerCase();
+  const hue = hashString(normalized) % 360;
+
+  return {
+    backgroundColor: `hsl(${hue} 88% 94%)`,
+    color: `hsl(${hue} 45% 30%)`,
+    borderColor: `hsl(${hue} 65% 80%)`
+  };
+};
+
 // --- Components ---
 
 const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
@@ -156,7 +175,7 @@ const JobDetailCard = ({ item, isExpanded, onToggle }) => {
             <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
               <RotateCcw className="w-3.5 h-3.5" /> Thématique
             </p>
-            <p className="text-[11px] font-bold italic text-slate-600 leading-snug">{item['Thématique']}</p>
+            <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
           </div>
         </div>
 
@@ -176,15 +195,32 @@ const JobDetailCard = ({ item, isExpanded, onToggle }) => {
   );
 };
 
-const Badge = ({ children, variant = 'default' }) => {
+const Badge = ({ children, variant = 'default', className }) => {
   const variants = {
     default: "bg-slate-100 text-slate-700",
     ac: "bg-blue-100 text-blue-700 border border-blue-200 font-bold px-3 py-1 ring-2 ring-blue-50/50",
     ate: "bg-amber-100 text-amber-700 border border-amber-200"
   };
   return (
-    <span className={cn("px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-tight", variants[variant])}>
+    <span className={cn("inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-tight", variants[variant], className)}>
       {children}
+    </span>
+  );
+};
+
+const ThemeBadge = ({ theme, className }) => {
+  const themeLabel = theme?.trim() || 'Non renseigné';
+
+  return (
+    <span
+      className={cn(
+        "inline-flex min-w-0 shrink items-center px-3 py-1 rounded-full border text-xs font-semibold tracking-tight normal-case ring-2 ring-white/60 max-w-[220px]",
+        className
+      )}
+      style={getThemeBadgeStyle(themeLabel)}
+      title={themeLabel}
+    >
+      <span className="truncate">{themeLabel}</span>
     </span>
   );
 };
@@ -292,6 +328,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
   const postSheetLink = getPostSheetLink(item);
+  const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
 
   return (
     <div
@@ -324,6 +361,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
         <div className="flex items-center gap-2">
           <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+          <ThemeBadge theme={themeLabel} className="max-w-[95px] !px-2 !py-0.5 !text-[10px] md:max-w-[180px] md:!px-3 md:!py-1 md:!text-xs" />
           {!isExpanded && postSheetLink && (
             <a
               href={postSheetLink}
@@ -339,7 +377,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
         </div>
 
         <h3 className={cn(
-          "text-xs md:text-sm font-bold text-slate-900 leading-tight",
+          "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors",
           !isExpanded && "truncate",
           isTaken && "line-through"
         )}>
@@ -347,14 +385,18 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
         </h3>
 
         {!isExpanded && (
-          <div className="flex flex-col gap-0.5 text-slate-700 md:text-slate-600 text-[10px] md:text-xs font-medium">
-            <span className="flex items-center gap-1 truncate italic">
-              <Building2 className="w-2.5 h-2.5 text-slate-400" />
-              {item['Ministère']}
+          <div className="flex flex-col gap-0.5">
+            <span className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-600 font-medium truncate">
+              <Building2 className="w-2.5 h-2.5 text-slate-300 md:text-slate-400" />
+              <span className="truncate">{item['Ministère']}</span>
             </span>
-            <span className="flex items-center gap-1 truncate font-bold text-blue-800">
-              <MapPin className="w-2.5 h-2.5 text-blue-700" />
-              {item['Localisation (Commune ou adresse exacte)']} <span className="text-slate-400 font-normal ml-1">• {item['Région']}</span>
+            <span className="flex items-center gap-1 text-[9px] md:text-xs font-bold text-blue-700 md:text-slate-700 truncate leading-tight">
+              <MapPin className="w-2.5 h-2.5 text-blue-500 md:text-slate-400" />
+              <span className="truncate">
+                {item['Localisation (Commune ou adresse exacte)']}
+                {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+                <span className="text-slate-400 font-normal"> • {item['Région']}</span>
+              </span>
             </span>
           </div>
         )}
@@ -379,6 +421,73 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
           <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
         </button>
       </div>
+    </div>
+  );
+};
+
+const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleTaken, toggleShortlist, onToggle }) => {
+  const id = item.Référence;
+  const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+  const postSheetLink = getPostSheetLink(item);
+
+  return (
+    <div
+      onClick={() => onToggle(id)}
+      className={cn(
+        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer",
+        isTaken && "opacity-50 grayscale bg-slate-50",
+        isShortlisted && "bg-amber-50/20"
+      )}
+    >
+      <div className="shrink-0 pt-1">
+        <button
+          onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
+          className={cn("transition-all hover:scale-110 active:scale-90", isShortlisted ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}
+          title={isShortlisted ? "Retirer du ranking" : "Ajouter au ranking"}
+        >
+          <Star className={cn("w-6 h-6", isShortlisted && "fill-current")} />
+        </button>
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col gap-1 py-1">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
+          <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="!px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
+          <ThemeBadge theme={themeLabel} className="max-w-[68px] !px-1 !py-0 !text-[7px]" />
+          {postSheetLink && (
+            <a
+              href={postSheetLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0"
+              title="Voir la fiche"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+
+        <p className={cn("font-bold text-slate-900 text-[10px] leading-tight line-clamp-2", isTaken && "line-through")}>
+          {item['Intitulé du poste']}
+        </p>
+
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <p className="flex items-center gap-1 text-[8px] text-slate-600 font-medium truncate">
+            <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300" />
+            <span className="truncate">{item['Ministère']}</span>
+          </p>
+          <p className="flex items-center gap-1 text-[9px] text-blue-700 font-bold leading-tight truncate">
+            <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500" />
+            <span className="truncate">
+              {item['Localisation (Commune ou adresse exacte)']}
+              {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+              <span className="text-slate-400 font-normal"> • {item['Région']}</span>
+            </span>
+          </p>
+        </div>
+      </div>
+
     </div>
   );
 };
@@ -796,7 +905,7 @@ export default function App() {
             {/* Filter Bar (Sticky) */}
             <section className={cn(
               "p-3 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border sticky top-2 z-30 md:static md:top-auto md:overflow-visible transition-all duration-300",
-              hasActiveFilters ? "bg-slate-50/30 border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-slate-50/30 border-slate-100 shadow-sm"
+              hasActiveFilters ? "bg-white border-blue-200 ring-2 ring-blue-500/10 shadow-blue-900/5" : "bg-white border-slate-100 shadow-sm"
             )}>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -961,8 +1070,8 @@ export default function App() {
               </div>
             )}
 
-            <section className="bg-slate-50/30 rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
-              <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+            <section className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="p-4 md:p-6 border-b border-slate-100 flex items-center justify-between bg-white">
                 <div className="flex items-center gap-2 font-black text-slate-800 text-xs md:text-sm uppercase tracking-widest">
                   <LayoutGrid className="w-4 h-4" />
                   <span>Résultats ({filteredData.length})</span>
@@ -978,14 +1087,31 @@ export default function App() {
                   </select>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse table-fixed md:table-auto">
+              <div className="md:hidden divide-y divide-slate-100">
+                {pagedData.map((item, idx) => (
+                  <React.Fragment key={`${item.Référence}-${idx}`}>
+                    <ExplorerMobileItem
+                      item={item}
+                      isTaken={taken.includes(item.Référence)}
+                      isShortlisted={shortlisted.includes(item.Référence)}
+                      toggleTaken={toggleTaken}
+                      toggleShortlist={toggleShortlist}
+                      onToggle={toggleExpand}
+                    />
+                    {expandedIds.has(item.Référence) && (
+                      <JobDetailCard item={item} isExpanded={true} onToggle={toggleExpand} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse table-auto">
                   <thead>
                     <tr className="bg-slate-50/50">
                       <th className="px-2 md:px-6 py-4 md:py-5 text-center w-10 md:w-20">❤️</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Poste</th>
                       <th className="px-2 md:px-6 py-4 md:py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lieu / Min.</th>
-                      <th className="hidden md:table-cell px-6 py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-20">Env.</th>
                       <th className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 md:w-32">Status</th>
                       <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest w-10 md:w-24">Fiche</th>
                     </tr>
@@ -993,6 +1119,7 @@ export default function App() {
                   <tbody className="divide-y divide-slate-100">
                     {pagedData.map((item, idx) => {
                       const postSheetLink = getPostSheetLink(item);
+                      const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
                       return (
                       <React.Fragment key={`${item.Référence}-${idx}`}>
                         <tr
@@ -1009,57 +1136,45 @@ export default function App() {
                           </td>
                           <td className="px-2 md:px-6 py-4 md:py-5">
                             <div className={cn("flex flex-col gap-0.5 md:gap-1.5", taken.includes(item.Référence) && "line-through")}>
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[9px] md:text-[11px] font-black bg-slate-100 text-slate-500 px-1 py-0.5 rounded border border-slate-200 w-fit tabular-nums tracking-tight">{item.Référence}</span>
-                                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="md:hidden !px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
-                                {postSheetLink && (
-                                  <a
-                                    href={postSheetLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0 md:hidden"
-                                    title="Voir la fiche"
-                                  >
-                                    <ExternalLink className="w-3.5 h-3.5" />
-                                  </a>
-                                )}
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
+                                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+                                <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
                               </div>
-                              <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors uppercase tracking-tight text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
-                              <p className="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">{item['Thématique']}</p>
+                              <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
                             </div>
                           </td>
                           <td className="px-2 md:px-6 py-4 md:py-5">
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
                                 <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">{item['Localisation (Commune ou adresse exacte)']}{item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}</span>
+                                <span className="truncate">
+                                  {item['Localisation (Commune ou adresse exacte)']}
+                                  {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+                                  <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
+                                </span>
                               </p>
-                              <p className="hidden md:flex items-center gap-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">
-                                <span>{item['Région']}</span>
-                              </p>
-                              <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">
+                              <p className="flex items-center gap-1 text-[8px] md:text-[10px] text-slate-600 font-medium truncate">
                                 <Building2 className="w-2.5 h-2.5 shrink-0 text-slate-300 md:text-slate-400" />
                                 <span className="truncate">{item['Ministère']}</span>
                               </p>
                             </div>
                           </td>
-                          <td className="hidden md:table-cell px-6 py-5 text-center">
-                            <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-                          </td>
-                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5 text-center">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
-                              className={cn(
-                                "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
-                                taken.includes(item.Référence)
-                                  ? "bg-blue-800 border-blue-800 text-white"
-                                  : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400"
-                              )}
-                              title={taken.includes(item.Référence) ? "Remettre en disponible" : "Marquer comme pris"}
-                            >
-                              <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
-                            </button>
+                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
+                            <div className="flex justify-center">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
+                                className={cn(
+                                  "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+                                  taken.includes(item.Référence)
+                                    ? "bg-blue-800 border-blue-800 text-white"
+                                    : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400"
+                                )}
+                                title={taken.includes(item.Référence) ? "Remettre en disponible" : "Marquer comme pris"}
+                              >
+                                <Check className={cn("w-4 h-4 md:w-5 md:h-5", taken.includes(item.Référence) ? "stroke-[3px]" : "stroke-[2px]")} />
+                              </button>
+                            </div>
                           </td>
                           <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
                             {postSheetLink && (
@@ -1076,13 +1191,6 @@ export default function App() {
                             )}
                           </td>
                         </tr>
-                        {expandedIds.has(item.Référence) && (
-                          <tr className="md:hidden">
-                            <td colSpan="3" className="p-0 border-none">
-                              <JobDetailCard item={item} isExpanded={true} onToggle={toggleExpand} />
-                            </td>
-                          </tr>
-                        )}
                       </React.Fragment>
                     )})}
                   </tbody>
