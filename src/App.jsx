@@ -771,6 +771,10 @@ export default function App() {
     reader.onload = (ev) => {
       try {
         const importedSession = parseImportedSession(JSON.parse(ev.target.result));
+        if (!importedSession) {
+          return
+        }
+
         setShortlisted(importedSession.shortlisted);
         setTaken(importedSession.taken);
         setNotesByPostId(importedSession.notes);

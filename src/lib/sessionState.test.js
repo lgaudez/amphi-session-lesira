@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import {
   STORAGE_KEYS,
-  emptySessionState,
   normalizeNoteValue,
   parseImportedSession,
   parseStoredArray,
@@ -100,9 +99,15 @@ describe('parseImportedSession', () => {
     })
   })
 
-  it('returns empty state on malformed payload', () => {
-    expect(parseImportedSession('bad payload')).toEqual(emptySessionState())
-    expect(parseImportedSession(null)).toEqual(emptySessionState())
+  it('signals structurally invalid imported payloads', () => {
+    expect(parseImportedSession({})).toBeNull()
+    expect(parseImportedSession({ unrelated: true })).toBeNull()
+    expect(parseImportedSession({ shortlisted: 'bad payload' })).toBeNull()
+  })
+
+  it('signals malformed payloads as invalid', () => {
+    expect(parseImportedSession('bad payload')).toBeNull()
+    expect(parseImportedSession(null)).toBeNull()
   })
 })
 

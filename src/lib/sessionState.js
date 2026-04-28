@@ -76,15 +76,39 @@ export function updateNotesMap(previousNotes, postId, nextValue) {
   return notes
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
 export function parseImportedSession(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    return emptySessionState()
+  if (!isPlainObject(payload)) {
+    return null
+  }
+
+  const hasShortlisted = Object.hasOwn(payload, 'shortlisted')
+  const hasTaken = Object.hasOwn(payload, 'taken')
+  const hasNotes = Object.hasOwn(payload, 'notes')
+
+  if (!hasShortlisted && !hasTaken) {
+    return null
+  }
+
+  if (hasShortlisted && !Array.isArray(payload.shortlisted)) {
+    return null
+  }
+
+  if (hasTaken && !Array.isArray(payload.taken)) {
+    return null
+  }
+
+  if (hasNotes && !isPlainObject(payload.notes)) {
+    return null
   }
 
   return {
-    shortlisted: Array.isArray(payload.shortlisted) ? payload.shortlisted : [],
-    taken: Array.isArray(payload.taken) ? payload.taken : [],
-    notes: payload.notes && typeof payload.notes === 'object' && !Array.isArray(payload.notes)
+    shortlisted: hasShortlisted ? payload.shortlisted : [],
+    taken: hasTaken ? payload.taken : [],
+    notes: hasNotes
       ? Object.entries(payload.notes).reduce((notes, [postId, value]) => {
           const normalized = normalizeNoteValue(value)
 
