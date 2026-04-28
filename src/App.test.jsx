@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import App from './App'
@@ -44,20 +44,37 @@ describe('App shared notes', () => {
 
     render(<App />)
 
-    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = await screen.findByRole('row', {
+      name: /REF-001.*Poste test partage/i,
+    })
 
-    await user.click(screen.getAllByTitle('Ajouter une note')[0])
+    await user.click(
+      within(desktopExplorerRow).getByRole('button', {
+        name: /ajouter une note pour REF-001/i,
+      }),
+    )
 
-    const explorerNoteField = screen.getAllByLabelText('Notes pour REF-001')[0]
+    const desktopExplorerDetailRow = desktopExplorerRow.nextElementSibling
+    expect(desktopExplorerDetailRow).not.toBeNull()
 
-    fireEvent.change(explorerNoteField, { target: { value: 'Note partagee' } })
+    const desktopExplorerNoteField = within(desktopExplorerDetailRow).getByLabelText('Notes pour REF-001')
 
-    const explorerNoteButton = screen.getAllByTitle('Modifier la note')[0]
-    expect(explorerNoteButton.getAttribute('data-has-note')).toBe('true')
+    fireEvent.change(desktopExplorerNoteField, { target: { value: 'Note partagee' } })
+
+    const visibleDesktopNoteButton = within(desktopExplorerRow).getByRole('button', {
+      name: /modifier une note pour REF-001/i,
+    })
+    expect(visibleDesktopNoteButton.getAttribute('data-has-note')).toBe('true')
+
+    await user.click(visibleDesktopNoteButton)
+
+    expect(document.activeElement).toBe(desktopExplorerNoteField)
 
     await user.click(screen.getByRole('button', { name: /mon ranking/i }))
 
-    const rankingNoteButton = screen.getByTitle('Modifier la note')
+    const rankingNoteButton = screen.getByRole('button', {
+      name: /modifier une note pour REF-001/i,
+    })
     expect(rankingNoteButton.getAttribute('data-has-note')).toBe('true')
 
     await user.click(rankingNoteButton)

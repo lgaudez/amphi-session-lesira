@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
 import logoGaudez from './assets/logo-gaudez.png';
 import PostNotesEditor from './components/PostNotesEditor';
@@ -132,11 +132,10 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
   </div>
 );
 
-const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChange }) => {
+const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChange, noteInputRef }) => {
   if (!isExpanded) return null;
   const postSheetLink = getPostSheetLink(item);
   const postId = item.Référence;
-  const noteFieldId = `post-note-${postId}`;
 
   return (
     <div className="px-4 py-8 bg-slate-50 border-t-2 border-blue-100 animate-in fade-in slide-in-from-top-2">
@@ -186,7 +185,7 @@ const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChang
         </div>
 
         <PostNotesEditor
-          id={noteFieldId}
+          ref={noteInputRef}
           value={noteValue}
           onChange={(nextValue) => onNoteChange?.(postId, nextValue)}
           label={`Notes pour ${postId}`}
@@ -255,15 +254,14 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
   </button>
 );
 
-const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, compact = false, className }) => {
-  const noteFieldId = `post-note-${postId}`;
+const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, onFocusEditor, compact = false, className }) => {
   const label = `${hasNote ? 'Modifier' : 'Ajouter'} une note pour ${postId}`;
 
   const handleClick = (event) => {
     event.stopPropagation();
 
     if (isExpanded) {
-      document.getElementById(noteFieldId)?.focus();
+      onFocusEditor?.();
       return;
     }
 
@@ -289,6 +287,110 @@ const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, compact =
       <FileText className="w-3.5 h-3.5" />
       {!compact && <span>{hasNote ? 'Note' : 'Notes'}</span>}
     </button>
+  );
+};
+
+const ExplorerDesktopRow = ({
+  item,
+  isTaken,
+  isShortlisted,
+  isExpanded,
+  noteValue,
+  toggleExpand,
+  toggleShortlist,
+  toggleTaken,
+  onNoteChange,
+}) => {
+  const noteInputRef = useRef(null);
+  const postSheetLink = getPostSheetLink(item);
+  const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+  const hasNote = Boolean(noteValue);
+
+  return (
+    <>
+      <tr
+        onClick={() => toggleExpand(item.Référence)}
+        className={cn("transition-all group cursor-pointer", isTaken && "opacity-40 grayscale bg-slate-50/50", isShortlisted && "bg-amber-50/20")}
+      >
+        <td className="px-2 md:px-6 py-4 md:py-5 text-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleShortlist(item.Référence); }}
+            className={cn("transition-all hover:scale-125 active:scale-90", isShortlisted ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}
+          >
+            <Star className={cn("w-5 h-5 md:w-7 md:h-7", isShortlisted && "fill-current animate-in zoom-in-50")} />
+          </button>
+        </td>
+        <td className="px-2 md:px-6 py-4 md:py-5">
+          <div className={cn("flex flex-col gap-0.5 md:gap-1.5", isTaken && "line-through")}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
+              <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+              <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
+              <PostNoteButton
+                postId={item.Référence}
+                hasNote={hasNote}
+                isExpanded={isExpanded}
+                onOpen={toggleExpand}
+                onFocusEditor={() => noteInputRef.current?.focus()}
+              />
+            </div>
+            <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
+          </div>
+        </td>
+        <td className="px-2 md:px-6 py-4 md:py-5">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
+              <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
+              <span className="truncate">
+                {item['Localisation (Commune ou adresse exacte)']}
+                {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+                <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
+              </span>
+            </p>
+            <p className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
+              <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 text-slate-300 md:text-slate-400" />
+              <span className="truncate">{item['Ministère']}</span>
+            </p>
+          </div>
+        </td>
+        <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
+          <div className="flex justify-center">
+            <AvailabilityButton
+              isTaken={isTaken}
+              onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
+            />
+          </div>
+        </td>
+        <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
+          {postSheetLink && (
+            <a
+              href={postSheetLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
+              title="Voir la fiche"
+            >
+              <ExternalLink className="w-5 h-5" />
+            </a>
+          )}
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="bg-slate-50">
+          <td colSpan={5} className="p-0">
+            <JobDetailCard
+              item={item}
+              isExpanded={true}
+              onToggle={toggleExpand}
+              noteValue={noteValue}
+              onNoteChange={onNoteChange}
+              noteInputRef={noteInputRef}
+            />
+          </td>
+        </tr>
+      )}
+    </>
   );
 };
 
@@ -405,6 +507,7 @@ const SortableItem = ({
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
+  const noteInputRef = useRef(null);
   const postSheetLink = getPostSheetLink(item);
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
   const hasNote = Boolean(noteValue);
@@ -446,6 +549,7 @@ const SortableItem = ({
             hasNote={hasNote}
             isExpanded={isExpanded}
             onOpen={onToggle}
+            onFocusEditor={() => noteInputRef.current?.focus()}
             className="ml-auto"
           />
           {!isExpanded && postSheetLink && (
@@ -493,6 +597,7 @@ const SortableItem = ({
           onToggle={onToggle}
           noteValue={noteValue}
           onNoteChange={onNoteChange}
+          noteInputRef={noteInputRef}
         />
       </div>
 
@@ -515,7 +620,16 @@ const SortableItem = ({
   );
 };
 
-const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onToggle, noteValue = '', isExpanded = false }) => {
+const ExplorerMobileItem = ({
+  item,
+  isTaken,
+  isShortlisted,
+  toggleShortlist,
+  onToggle,
+  noteValue = '',
+  isExpanded = false,
+  noteInputRef,
+}) => {
   const id = item.Référence;
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
   const postSheetLink = getPostSheetLink(item);
@@ -550,6 +664,7 @@ const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onT
             hasNote={hasNote}
             isExpanded={isExpanded}
             onOpen={onToggle}
+            onFocusEditor={() => noteInputRef.current?.focus()}
             compact
           />
           {postSheetLink && (
@@ -587,6 +702,44 @@ const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onT
       </div>
 
     </div>
+  );
+};
+
+const ExplorerMobileEntry = ({
+  item,
+  isTaken,
+  isShortlisted,
+  isExpanded,
+  noteValue,
+  toggleShortlist,
+  toggleExpand,
+  onNoteChange,
+}) => {
+  const noteInputRef = useRef(null);
+
+  return (
+    <>
+      <ExplorerMobileItem
+        item={item}
+        isTaken={isTaken}
+        isShortlisted={isShortlisted}
+        toggleShortlist={toggleShortlist}
+        onToggle={toggleExpand}
+        noteValue={noteValue}
+        isExpanded={isExpanded}
+        noteInputRef={noteInputRef}
+      />
+      {isExpanded && (
+        <JobDetailCard
+          item={item}
+          isExpanded={true}
+          onToggle={toggleExpand}
+          noteValue={noteValue}
+          onNoteChange={onNoteChange}
+          noteInputRef={noteInputRef}
+        />
+      )}
+    </>
   );
 };
 
@@ -1276,26 +1429,17 @@ export default function App() {
               </div>
               <div className="md:hidden divide-y divide-slate-100">
                 {pagedData.map((item, idx) => (
-                  <React.Fragment key={`${item.Référence}-${idx}`}>
-                    <ExplorerMobileItem
-                      item={item}
-                      isTaken={taken.includes(item.Référence)}
-                      isShortlisted={shortlisted.includes(item.Référence)}
-                      toggleShortlist={toggleShortlist}
-                      onToggle={toggleExpand}
-                      noteValue={notesByPostId[item.Référence] ?? ''}
-                      isExpanded={expandedIds.has(item.Référence)}
-                    />
-                    {expandedIds.has(item.Référence) && (
-                      <JobDetailCard
-                        item={item}
-                        isExpanded={true}
-                        onToggle={toggleExpand}
-                        noteValue={notesByPostId[item.Référence] ?? ''}
-                        onNoteChange={updatePostNote}
-                      />
-                    )}
-                  </React.Fragment>
+                  <ExplorerMobileEntry
+                    key={`${item.Référence}-${idx}`}
+                    item={item}
+                    isTaken={taken.includes(item.Référence)}
+                    isShortlisted={shortlisted.includes(item.Référence)}
+                    isExpanded={expandedIds.has(item.Référence)}
+                    noteValue={notesByPostId[item.Référence] ?? ''}
+                    toggleShortlist={toggleShortlist}
+                    toggleExpand={toggleExpand}
+                    onNoteChange={updatePostNote}
+                  />
                 ))}
               </div>
 
@@ -1312,94 +1456,22 @@ export default function App() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {pagedData.map((item, idx) => {
-                      const postSheetLink = getPostSheetLink(item);
-                      const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
                       const noteValue = notesByPostId[item.Référence] ?? '';
-                      const hasNote = Boolean(noteValue);
                       return (
-                      <React.Fragment key={`${item.Référence}-${idx}`}>
-                        <tr
-                          onClick={() => toggleExpand(item.Référence)}
-                          className={cn("transition-all group cursor-pointer", taken.includes(item.Référence) && "opacity-40 grayscale bg-slate-50/50", shortlisted.includes(item.Référence) && "bg-amber-50/20")}
-                        >
-                          <td className="px-2 md:px-6 py-4 md:py-5 text-center">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleShortlist(item.Référence); }}
-                              className={cn("transition-all hover:scale-125 active:scale-90", shortlisted.includes(item.Référence) ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}
-                            >
-                              <Star className={cn("w-5 h-5 md:w-7 md:h-7", shortlisted.includes(item.Référence) && "fill-current animate-in zoom-in-50")} />
-                            </button>
-                          </td>
-                          <td className="px-2 md:px-6 py-4 md:py-5">
-                            <div className={cn("flex flex-col gap-0.5 md:gap-1.5", taken.includes(item.Référence) && "line-through")}>
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
-                                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-                                <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
-                                <PostNoteButton
-                                  postId={item.Référence}
-                                  hasNote={hasNote}
-                                  isExpanded={expandedIds.has(item.Référence)}
-                                  onOpen={toggleExpand}
-                                />
-                              </div>
-                              <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
-                            </div>
-                          </td>
-                          <td className="px-2 md:px-6 py-4 md:py-5">
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                              <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
-                                <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">
-                                  {item['Localisation (Commune ou adresse exacte)']}
-                                  {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
-                                  <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
-                                </span>
-                              </p>
-                              <p className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
-                                <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 text-slate-300 md:text-slate-400" />
-                                <span className="truncate">{item['Ministère']}</span>
-                              </p>
-                            </div>
-                          </td>
-                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
-                            <div className="flex justify-center">
-                              <AvailabilityButton
-                                isTaken={taken.includes(item.Référence)}
-                                onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
-                              />
-                            </div>
-                          </td>
-                          <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
-                            {postSheetLink && (
-                              <a
-                                href={postSheetLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
-                                title="Voir la fiche"
-                              >
-                                <ExternalLink className="w-5 h-5" />
-                              </a>
-                            )}
-                          </td>
-                        </tr>
-                        {expandedIds.has(item.Référence) && (
-                          <tr className="bg-slate-50">
-                            <td colSpan={5} className="p-0">
-                              <JobDetailCard
-                                item={item}
-                                isExpanded={true}
-                                onToggle={toggleExpand}
-                                noteValue={noteValue}
-                                onNoteChange={updatePostNote}
-                              />
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    )})}
+                        <ExplorerDesktopRow
+                          key={`${item.Référence}-${idx}`}
+                          item={item}
+                          isTaken={taken.includes(item.Référence)}
+                          isShortlisted={shortlisted.includes(item.Référence)}
+                          isExpanded={expandedIds.has(item.Référence)}
+                          noteValue={noteValue}
+                          toggleExpand={toggleExpand}
+                          toggleShortlist={toggleShortlist}
+                          toggleTaken={toggleTaken}
+                          onNoteChange={updatePostNote}
+                        />
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
