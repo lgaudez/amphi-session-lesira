@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  STORAGE_KEYS,
   emptySessionState,
   normalizeNoteValue,
   parseImportedSession,
@@ -9,6 +10,16 @@ import {
   serializeSession,
   updateNotesMap,
 } from './sessionState'
+
+describe('STORAGE_KEYS', () => {
+  it('preserves the existing app storage contract', () => {
+    expect(STORAGE_KEYS).toEqual({
+      shortlisted: 'ira_shortlisted',
+      taken: 'ira_taken',
+      notes: 'ira_notes',
+    })
+  })
+})
 
 describe('normalizeNoteValue', () => {
   it('trims note text and drops whitespace-only notes', () => {

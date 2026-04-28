@@ -1,7 +1,7 @@
 export const STORAGE_KEYS = {
-  shortlisted: 'shortlistedPosts',
-  taken: 'takenPosts',
-  notes: 'postNotes',
+  shortlisted: 'ira_shortlisted',
+  taken: 'ira_taken',
+  notes: 'ira_notes',
 }
 
 export function emptySessionState() {
