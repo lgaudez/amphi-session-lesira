@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
 import logoGaudez from './assets/logo-gaudez.png';
+import PostNotesEditor from './components/PostNotesEditor';
+import {
+  STORAGE_KEYS,
+  parseImportedSession,
+  parseStoredArray,
+  parseStoredNotes,
+  serializeSession,
+  updateNotesMap,
+} from './lib/sessionState';
 import {
   Search,
   Building2,
@@ -8,11 +17,11 @@ import {
   Briefcase,
   ExternalLink,
   Filter,
-  BarChart3,
   ChevronDown,
   Loader2,
   PieChart,
   Star,
+  Check,
   CheckCircle2,
   Download,
   Upload,
@@ -85,10 +94,6 @@ function cn(...inputs) {
 // --- Configuration ---
 const CSV_URL = "https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/export?format=csv&gid=0";
 
-const COLORS = [
-  '#000091', '#E1000F', '#00AC8E', '#FFB800', '#718096', '#ED8936', '#4299E1', '#9F7AEA'
-];
-
 const getPostSheetLink = (item) =>
   item?.['Lien vers la fiche de poste'] ||
   item?.['LIEN FICHE DE POSTE'] ||
@@ -127,59 +132,133 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
   </div>
 );
 
-const JobDetailCard = ({ item, isExpanded, onToggle }) => {
+const JobDetailCard = ({
+  item,
+  isExpanded,
+  noteValue = '',
+  onNoteChange,
+  noteInputRef,
+  surface = 'default',
+}) => {
   if (!isExpanded) return null;
   const postSheetLink = getPostSheetLink(item);
+  const postId = item.Référence;
+  const isMobileSurface = surface === 'mobile';
+  const isRankingSurface = surface === 'ranking';
+  const isDesktopSurface = surface === 'desktop' || surface === 'ranking';
+  const detailSurfaceClass = isRankingSurface
+    ? "px-0 pb-4 pt-3 md:px-4 md:py-8 border-t border-slate-100 bg-white"
+    : isDesktopSurface
+      ? `px-0 pb-4 pt-3 md:px-4 md:py-8 border-t border-slate-100 ${DETAIL_ACTIVE_ACCENT_CLASS}`
+      : "px-4 pb-6 pt-5 border-x border-b border-slate-100 bg-white";
+  const detailLabelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-blue-600";
+  const detailHeaderAction = postSheetLink && isRankingSurface ? (
+    <a
+      href={postSheetLink}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-600"
+      title="Voir la fiche"
+    >
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  ) : null;
 
   return (
-    <div className="px-4 py-8 bg-slate-50 border-t-2 border-blue-100 animate-in fade-in slide-in-from-top-2">
-      <div className="max-w-md mx-auto space-y-6 text-left">
-        <div className="flex justify-between items-start gap-4">
-          <div className="space-y-1">
-            <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Détails du poste</h4>
-            <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
+    <div
+      data-testid={isMobileSurface ? 'job-detail-mobile' : 'job-detail-desktop'}
+      data-layout={isDesktopSurface ? 'wide' : 'stacked'}
+      onClick={(e) => e.stopPropagation()}
+      className={cn(
+        "animate-in fade-in slide-in-from-top-2",
+        detailSurfaceClass,
+      )}
+    >
+      <div
+        className={cn(
+          "mx-auto w-full text-left",
+          isDesktopSurface
+            ? "max-w-none space-y-4 md:space-y-6"
+            : "max-w-md space-y-6",
+        )}
+      >
+        <div data-testid="detail-header" className="space-y-1">
+          <div data-testid="detail-header-meta" className="flex items-center gap-2">
+            <h4 className={detailLabelClass}>Détails du poste</h4>
+            {detailHeaderAction}
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggle(item.Référence); }}
-            className="p-2 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600 transition-colors"
+          <p data-testid="detail-header-title" className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
+        </div>
+
+        <div className={cn(
+          "gap-6",
+          isDesktopSurface ? "grid gap-4 md:gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.95fr)] lg:items-start" : "space-y-6",
+        )}>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-5 md:gap-x-8 md:gap-y-6">
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <Building2 className="w-3.5 h-3.5" /> Ministère
+                </p>
+                <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Ministère']}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <MapPin className="w-3.5 h-3.5" /> Localisation
+                </p>
+                <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Localisation (Commune ou adresse exacte)']}</p>
+                <p className="text-[10px] text-slate-500 font-black tracking-tighter mt-1">{item['Code postal']} — {item['Région']}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <Briefcase className="w-3.5 h-3.5" /> Environnement
+                </p>
+                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <RotateCcw className="w-3.5 h-3.5" /> Thématique
+                </p>
+                <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
+              </div>
+            </div>
+
+            {postSheetLink && !isDesktopSurface && (
+              <a
+                href={postSheetLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
+              >
+                <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
+              </a>
+            )}
+          </div>
+
+          <div
+            data-testid={isDesktopSurface ? 'desktop-note-panel' : undefined}
+            className={cn(
+              "space-y-4",
+              isDesktopSurface && "lg:rounded-[1.75rem] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:shadow-sm",
+            )}
           >
-            <ChevronDown className="w-5 h-5 rotate-180" />
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <Building2 className="w-3.5 h-3.5" /> Ministère
-            </p>
-            <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Ministère']}</p>
-          </div>
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <MapPin className="w-3.5 h-3.5" /> Localisation
-            </p>
-            <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Localisation (Commune ou adresse exacte)']}</p>
-            <p className="text-[10px] text-slate-500 font-black tracking-tighter mt-1">{item['Code postal']} — {item['Région']}</p>
-          </div>
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <Briefcase className="w-3.5 h-3.5" /> Environnement
-            </p>
-            <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-          </div>
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <RotateCcw className="w-3.5 h-3.5" /> Thématique
-            </p>
-            <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
+            <PostNotesEditor
+              ref={noteInputRef}
+              value={noteValue}
+              onChange={(nextValue) => onNoteChange?.(postId, nextValue)}
+              label={`Notes pour ${postId}`}
+              placeholder="Ajouter une note pour ce poste"
+            />
           </div>
         </div>
-
-        {postSheetLink && (
+        {postSheetLink && isDesktopSurface && !isRankingSurface && (
           <a
+            data-testid="desktop-sheet-cta"
             href={postSheetLink}
             target="_blank"
             rel="noreferrer"
@@ -228,7 +307,7 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
   <button
     onClick={onClick}
     className={cn(
-      "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+      "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm group-hover:border-blue-300 group-hover:text-blue-500",
       isTaken
         ? "bg-blue-800 border-blue-800 text-white"
         : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400",
@@ -239,6 +318,133 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
     <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
   </button>
 );
+
+const PassiveNoteIndicator = ({ className }) => (
+  <span
+    aria-label="Note"
+    title="Note enregistrée"
+    className={cn(
+      "inline-flex items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors",
+      className
+    )}
+  >
+    <FileText className="w-3.5 h-3.5" />
+  </span>
+);
+
+const ROW_ACTIVE_ACCENT_CLASS = "shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]";
+const ROW_HOVER_ACCENT_CLASS = "hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]";
+const DETAIL_ACTIVE_ACCENT_CLASS = "bg-white shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]";
+
+const ExplorerDesktopRow = ({
+  item,
+  isTaken,
+  isShortlisted,
+  isExpanded,
+  noteValue,
+  toggleExpand,
+  toggleShortlist,
+  toggleTaken,
+  onNoteChange,
+}) => {
+  const noteInputRef = useRef(null);
+  const postSheetLink = getPostSheetLink(item);
+  const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+  const hasNote = Boolean(noteValue);
+
+  return (
+    <>
+      <tr
+        onClick={() => toggleExpand(item.Référence)}
+        data-testid={`desktop-post-row-${item.Référence}-desktop`}
+        className={cn(
+          "transition-all group cursor-pointer",
+          isTaken && "opacity-40 grayscale bg-slate-50/50",
+          isExpanded
+            ? ROW_ACTIVE_ACCENT_CLASS
+            : `hover:bg-slate-50/80 ${ROW_HOVER_ACCENT_CLASS}`
+        )}
+      >
+        <td className="px-2 md:px-6 py-4 md:py-5 text-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleShortlist(item.Référence); }}
+            className={cn("transition-all hover:scale-125 active:scale-90", isShortlisted ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}
+          >
+            <Star className={cn("w-5 h-5 md:w-7 md:h-7", isShortlisted && "fill-current animate-in zoom-in-50")} />
+          </button>
+        </td>
+        <td className="px-2 md:px-6 py-4 md:py-5">
+          <div className={cn("flex flex-col gap-0.5 md:gap-1.5", isTaken && "line-through")}>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
+              <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+              <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
+              {hasNote && (
+                <PassiveNoteIndicator className="ml-auto h-8 w-8 shrink-0 group-hover:border-blue-200 group-hover:text-blue-600" />
+              )}
+            </div>
+            <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
+          </div>
+        </td>
+        <td className="px-2 md:px-6 py-4 md:py-5">
+          <div className="flex flex-col gap-0.5 min-w-0">
+            <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
+              <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
+              <span className="truncate">
+                {item['Localisation (Commune ou adresse exacte)']}
+                {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
+                <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
+              </span>
+            </p>
+            <p className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
+              <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 text-slate-300 md:text-slate-400" />
+              <span className="truncate">{item['Ministère']}</span>
+            </p>
+          </div>
+        </td>
+        <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
+          <div className="flex justify-center">
+            <AvailabilityButton
+              isTaken={isTaken}
+              onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
+            />
+          </div>
+        </td>
+        <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
+          <div className="flex items-center justify-end gap-3">
+            {postSheetLink && (
+              <a
+                href={postSheetLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
+                title="Voir la fiche"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </a>
+            )}
+          </div>
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="bg-white">
+          <td colSpan={5} className="p-0">
+            <JobDetailCard
+              item={item}
+              isExpanded={true}
+              onToggle={toggleExpand}
+              noteValue={noteValue}
+              onNoteChange={onNoteChange}
+              noteInputRef={noteInputRef}
+              surface="desktop"
+            />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
 
 const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -339,26 +545,41 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Ic
   );
 };
 
-const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, isExpanded, onToggle }) => {
+const SortableItem = ({
+  id,
+  item,
+  index,
+  isTaken,
+  toggleTaken,
+  toggleShortlist,
+  isExpanded,
+  onToggle,
+  noteValue = '',
+  onNoteChange,
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
+  const noteInputRef = useRef(null);
   const postSheetLink = getPostSheetLink(item);
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+  const hasNote = Boolean(noteValue);
 
   return (
     <div
+      data-testid={`ranking-post-row-${id}`}
       ref={setNodeRef}
       style={style}
       onClick={() => onToggle(id)}
       className={cn(
         "bg-white flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all group relative cursor-pointer",
         isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
-        !isDragging && "hover:bg-slate-50/50",
+        !isDragging && `hover:bg-slate-50/50 md:${ROW_HOVER_ACCENT_CLASS}`,
+        isExpanded && ROW_ACTIVE_ACCENT_CLASS,
         isTaken && "opacity-50 grayscale bg-slate-50"
       )}
     >
       {/* Left side: Rank + Handle stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-1 border-r border-slate-100 self-stretch">
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-1 border-r border-slate-100 self-start md:self-stretch">
         <div
           {...attributes}
           {...listeners}
@@ -377,27 +598,19 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
           <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[95px] !px-2 !py-0.5 !text-[10px] md:max-w-[180px] md:!px-3 md:!py-1 md:!text-xs" />
-          {!isExpanded && postSheetLink && (
-            <a
-              href={postSheetLink}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0"
-              title="Voir la fiche"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+          {hasNote && (
+            <PassiveNoteIndicator className="ml-auto h-7 w-7 shrink-0 md:hidden" />
           )}
         </div>
 
-        <h3 className={cn(
-          "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors",
-          !isExpanded && "truncate",
-          isTaken && "line-through"
-        )}>
-          {item['Intitulé du poste']}
-        </h3>
+        {!isExpanded && (
+          <h3 className={cn(
+            "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors truncate",
+            isTaken && "line-through"
+          )}>
+            {item['Intitulé du poste']}
+          </h3>
+        )}
 
         {!isExpanded && (
           <div className="flex flex-col gap-0.5">
@@ -416,40 +629,78 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
           </div>
         )}
 
-        <JobDetailCard item={item} isExpanded={isExpanded} onToggle={onToggle} />
+        <JobDetailCard
+          item={item}
+          isExpanded={isExpanded}
+          onToggle={onToggle}
+          noteValue={noteValue}
+          onNoteChange={onNoteChange}
+          noteInputRef={noteInputRef}
+          surface="ranking"
+        />
       </div>
 
       {/* Right side: Buttons stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:flex-row md:border-l-0 md:gap-2">
-        <AvailabilityButton
-          isTaken={isTaken}
-          onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
-          className="w-8 h-8 md:w-10 md:h-10"
-        />
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
-          className="p-1.5 md:p-2 text-amber-500 hover:text-red-500 transition-all"
-          title="Retirer du ranking"
-        >
-          <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
-        </button>
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-start md:min-w-[112px] md:self-stretch md:justify-between md:gap-3 md:pl-4">
+        <div data-testid="ranking-row-actions" className="hidden md:flex min-h-8 items-center justify-center gap-1.5">
+          {hasNote && (
+            <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
+          )}
+          {!isExpanded && postSheetLink && (
+            <a
+              href={postSheetLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
+              title="Voir la fiche"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 md:min-h-10 md:flex-row md:gap-2">
+          <AvailabilityButton
+            isTaken={isTaken}
+            onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
+            className="w-8 h-8 md:w-10 md:h-10"
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
+            className="p-1.5 md:p-2 text-amber-500 hover:text-red-500 transition-all"
+            title="Retirer du ranking"
+          >
+            <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleTaken, toggleShortlist, onToggle }) => {
+const ExplorerMobileItem = ({
+  item,
+  isTaken,
+  isShortlisted,
+  toggleShortlist,
+  onToggle,
+  noteValue = '',
+  isExpanded = false,
+}) => {
   const id = item.Référence;
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
   const postSheetLink = getPostSheetLink(item);
+  const hasNote = Boolean(noteValue);
 
   return (
     <div
+      data-testid={`mobile-post-card-${id}`}
+      data-expanded={isExpanded ? 'true' : 'false'}
       onClick={() => onToggle(id)}
       className={cn(
-        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer",
+        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer border border-transparent",
         isTaken && "opacity-50 grayscale bg-slate-50",
-        isShortlisted && "bg-amber-50/20"
+        isExpanded && "border-slate-100"
       )}
     >
       <div className="shrink-0 pt-1">
@@ -467,6 +718,9 @@ const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleTaken, toggleS
           <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="!px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[68px] !px-1 !py-0 !text-[7px]" />
+          {hasNote && (
+            <PassiveNoteIndicator className="ml-auto h-7 w-7 shrink-0" />
+          )}
           {postSheetLink && (
             <a
               href={postSheetLink}
@@ -501,6 +755,45 @@ const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleTaken, toggleS
         </div>
       </div>
 
+    </div>
+  );
+};
+
+const ExplorerMobileEntry = ({
+  item,
+  isTaken,
+  isShortlisted,
+  isExpanded,
+  noteValue,
+  toggleShortlist,
+  toggleExpand,
+  onNoteChange,
+}) => {
+  const noteInputRef = useRef(null);
+
+  return (
+    <div className={cn("px-2 pt-2", isExpanded && ROW_ACTIVE_ACCENT_CLASS)}>
+      <ExplorerMobileItem
+        item={item}
+        isTaken={isTaken}
+        isShortlisted={isShortlisted}
+        toggleShortlist={toggleShortlist}
+        onToggle={toggleExpand}
+        noteValue={noteValue}
+        isExpanded={isExpanded}
+        noteInputRef={noteInputRef}
+      />
+      {isExpanded && (
+        <JobDetailCard
+          item={item}
+          isExpanded={true}
+          onToggle={toggleExpand}
+          noteValue={noteValue}
+          onNoteChange={onNoteChange}
+          noteInputRef={noteInputRef}
+          surface="mobile"
+        />
+      )}
     </div>
   );
 };
@@ -607,10 +900,10 @@ export default function App() {
   const [showRankingHelp, setShowRankingHelp] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showDesktopFilters, setShowDesktopFilters] = useState(true);
-  const [showMobileStats, setShowMobileStats] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
-  const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
-  const [taken, setTaken] = useState(() => JSON.parse(localStorage.getItem('ira_taken') || '[]'));
+  const [shortlisted, setShortlisted] = useState(() => parseStoredArray(localStorage.getItem(STORAGE_KEYS.shortlisted)));
+  const [taken, setTaken] = useState(() => parseStoredArray(localStorage.getItem(STORAGE_KEYS.taken)));
+  const [notesByPostId, setNotesByPostId] = useState(() => parseStoredNotes(localStorage.getItem(STORAGE_KEYS.notes)));
 
   // Multi-Filter States
   const [search, setSearch] = useState('');
@@ -623,6 +916,69 @@ export default function App() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedIds, setExpandedIds] = useState(new Set());
+
+  const updatePostNote = useCallback((postId, nextValue) => {
+    setNotesByPostId(previousNotes => updateNotesMap(previousNotes, postId, nextValue));
+  }, []);
+
+  const sharedNotesSession = useMemo(() => ({
+    notesByPostId,
+    updatePostNote,
+  }), [notesByPostId, updatePostNote]);
+
+  const resetCurrentPage = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((nextValue) => {
+    setSearch(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleEnvFilterChange = useCallback((nextValue) => {
+    setEnvFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleMinFilterChange = useCallback((nextValue) => {
+    setMinFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleThemeFilterChange = useCallback((nextValue) => {
+    setThemeFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleRegionFilterChange = useCallback((nextValue) => {
+    setRegionFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleDeptFilterChange = useCallback((nextValue) => {
+    setDeptFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleHideTakenToggle = useCallback(() => {
+    setHideTaken(previousValue => !previousValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleItemsPerPageChange = useCallback((nextValue) => {
+    setItemsPerPage(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const resetFilters = useCallback(() => {
+    setSearch('');
+    setEnvFilter([]);
+    setMinFilter([]);
+    setThemeFilter([]);
+    setRegionFilter([]);
+    setDeptFilter([]);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
 
   // Filter state indicators
   const filterCount = [envFilter, minFilter, themeFilter, regionFilter, deptFilter].filter(f => f.length > 0).length + (search ? 1 : 0);
@@ -648,12 +1004,9 @@ export default function App() {
   }, [showFilters]);
 
   const toggleExpand = (id) => {
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setExpandedIds(prev => (
+      prev.has(id) ? new Set() : new Set([id])
+    ));
   };
 
   const sensors = useSensors(
@@ -662,8 +1015,9 @@ export default function App() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  useEffect(() => { localStorage.setItem('ira_shortlisted', JSON.stringify(shortlisted)); }, [shortlisted]);
-  useEffect(() => { localStorage.setItem('ira_taken', JSON.stringify(taken)); }, [taken]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.shortlisted, JSON.stringify(shortlisted)); }, [shortlisted]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.taken, JSON.stringify(taken)); }, [taken]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(sharedNotesSession.notesByPostId)); }, [sharedNotesSession]);
 
   useEffect(() => {
     Papa.parse(CSV_URL, {
@@ -689,7 +1043,11 @@ export default function App() {
   };
 
   const exportSession = () => {
-    const blob = new Blob([JSON.stringify({ shortlisted, taken }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([serializeSession({
+      shortlisted,
+      taken,
+      notes: sharedNotesSession.notesByPostId,
+    })], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `session-ira.json`; a.click();
   };
 
@@ -697,9 +1055,20 @@ export default function App() {
     const f = e.target.files[0]; if (!f) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const json = JSON.parse(ev.target.result);
-      if (json.shortlisted) setShortlisted(json.shortlisted);
-      if (json.taken) setTaken(json.taken);
+      try {
+        const importedSession = parseImportedSession(JSON.parse(ev.target.result));
+        if (!importedSession) {
+          return
+        }
+
+        setShortlisted(importedSession.shortlisted);
+        setTaken(importedSession.taken);
+        setNotesByPostId(importedSession.notes);
+      } catch {
+        // Ignore malformed JSON imports and keep the current session intact.
+      } finally {
+        e.target.value = '';
+      }
     };
     reader.readAsText(f);
   };
@@ -756,8 +1125,6 @@ export default function App() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const pagedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, regionFilter, deptFilter, hideTaken, itemsPerPage]);
-
   if (loading) return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 gap-6">
       <div className="relative">
@@ -772,6 +1139,18 @@ export default function App() {
       </div>
     </div>
   );
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-md rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Erreur</p>
+          <h1 className="text-xl font-black text-slate-900">Chargement impossible</h1>
+          <p className="text-sm font-medium text-slate-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-3 md:px-8 lg:px-12 selection:bg-blue-100 selection:text-blue-900 pb-20">
@@ -930,7 +1309,7 @@ export default function App() {
                   </div>
                   {filterCount > 0 && (
                     <button
-                      onClick={() => { setSearch(''); setEnvFilter([]); setMinFilter([]); setThemeFilter([]); setRegionFilter([]); setDeptFilter([]); }}
+                      onClick={resetFilters}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white text-blue-600 rounded-xl text-[9px] font-black uppercase shadow-sm border border-blue-100 hover:bg-blue-800 hover:text-white transition-all shrink-0"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -941,7 +1320,7 @@ export default function App() {
 
                 <div className="flex items-center gap-2 min-w-0 ml-auto">
                   <button
-                    onClick={() => setHideTaken(!hideTaken)}
+                    onClick={handleHideTakenToggle}
                     className={cn(
                       "p-2.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-xs font-black transition-all border uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-sm",
                       hideTaken
@@ -1017,20 +1396,20 @@ export default function App() {
                         placeholder="ID en premier (ex: agri-AC-01)"
                         className="w-full pl-10 pr-9 py-3 bg-slate-100 border-2 border-transparent hover:bg-slate-200/50 focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-medium text-sm placeholder:font-medium"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                       {search && (
-                        <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
+                        <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
                           <X className="w-3 h-3 text-slate-500" />
                         </button>
                       )}
                     </div>
                   </div>
-                  <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
-                  <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
-                  <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
-                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
+                  <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={handleEnvFilterChange} placeholder="Tous" />
+                  <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={handleMinFilterChange} placeholder="Tous les ministères" />
+                  <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={handleThemeFilterChange} placeholder="Toutes thématiques" />
+                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={handleRegionFilterChange} placeholder="Toutes régions" />
+                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={handleDeptFilterChange} placeholder="Tous les dépts" />
                 </div>
               </div>
             </section>
@@ -1041,7 +1420,7 @@ export default function App() {
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setShowFilters(false)} />
                 <div
                   className="relative bg-white rounded-t-[3rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-300 ease-out overflow-hidden w-full left-0 right-0 border-x border-slate-100"
-                  style={{ maxHeight: '85vh', maxHeight: '85dvh' }}
+                  style={{ maxHeight: '85dvh' }}
                 >
                   <div className="px-8 pt-8 pb-4 flex justify-between items-center shrink-0 bg-white border-b border-slate-50 relative z-30">
                     <div className="space-y-1">
@@ -1060,15 +1439,15 @@ export default function App() {
                         placeholder="ID, Poste, Mots-clés..."
                         className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-bold text-sm shadow-inner"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                     </div>
                     <div className="space-y-6">
-                      <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
-                      <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
-                      <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                      <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
-                      <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
+                      <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={handleEnvFilterChange} placeholder="Tous" />
+                      <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={handleMinFilterChange} placeholder="Tous les ministères" />
+                      <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={handleThemeFilterChange} placeholder="Toutes thématiques" />
+                      <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={handleRegionFilterChange} placeholder="Toutes régions" />
+                      <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={handleDeptFilterChange} placeholder="Tous les dépts" />
                     </div>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 px-8 pt-6 pb-10 bg-gradient-to-t from-white via-white to-white/0 pointer-events-none z-30">
@@ -1094,27 +1473,25 @@ export default function App() {
                   <select
                     className="bg-slate-100 px-2 md:px-3 py-1.5 rounded-lg text-xs font-black border-transparent focus:ring-0 outline-none cursor-pointer"
                     value={itemsPerPage}
-                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
                   >
                     {[10, 25, 50, 100, 250, 500, 1000].map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="md:hidden divide-y divide-slate-100">
+              <div className="md:hidden divide-y divide-slate-200">
                 {pagedData.map((item, idx) => (
-                  <React.Fragment key={`${item.Référence}-${idx}`}>
-                    <ExplorerMobileItem
-                      item={item}
-                      isTaken={taken.includes(item.Référence)}
-                      isShortlisted={shortlisted.includes(item.Référence)}
-                      toggleTaken={toggleTaken}
-                      toggleShortlist={toggleShortlist}
-                      onToggle={toggleExpand}
-                    />
-                    {expandedIds.has(item.Référence) && (
-                      <JobDetailCard item={item} isExpanded={true} onToggle={toggleExpand} />
-                    )}
-                  </React.Fragment>
+                  <ExplorerMobileEntry
+                    key={`${item.Référence}-${idx}`}
+                    item={item}
+                    isTaken={taken.includes(item.Référence)}
+                    isShortlisted={shortlisted.includes(item.Référence)}
+                    isExpanded={expandedIds.has(item.Référence)}
+                    noteValue={notesByPostId[item.Référence] ?? ''}
+                    toggleShortlist={toggleShortlist}
+                    toggleExpand={toggleExpand}
+                    onNoteChange={updatePostNote}
+                  />
                 ))}
               </div>
 
@@ -1129,75 +1506,24 @@ export default function App() {
                       <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest w-10 md:w-24">Fiche</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-200">
                     {pagedData.map((item, idx) => {
-                      const postSheetLink = getPostSheetLink(item);
-                      const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+                      const noteValue = notesByPostId[item.Référence] ?? '';
                       return (
-                      <React.Fragment key={`${item.Référence}-${idx}`}>
-                        <tr
-                          onClick={() => toggleExpand(item.Référence)}
-                          className={cn("transition-all group cursor-pointer", taken.includes(item.Référence) && "opacity-40 grayscale bg-slate-50/50", shortlisted.includes(item.Référence) && "bg-amber-50/20")}
-                        >
-                          <td className="px-2 md:px-6 py-4 md:py-5 text-center">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); toggleShortlist(item.Référence); }}
-                              className={cn("transition-all hover:scale-125 active:scale-90", shortlisted.includes(item.Référence) ? "text-amber-500" : "text-slate-200 hover:text-amber-400")}
-                            >
-                              <Star className={cn("w-5 h-5 md:w-7 md:h-7", shortlisted.includes(item.Référence) && "fill-current animate-in zoom-in-50")} />
-                            </button>
-                          </td>
-                          <td className="px-2 md:px-6 py-4 md:py-5">
-                            <div className={cn("flex flex-col gap-0.5 md:gap-1.5", taken.includes(item.Référence) && "line-through")}>
-                              <div className="flex items-center gap-1.5 min-w-0">
-                                <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
-                                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-                                <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
-                              </div>
-                              <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
-                            </div>
-                          </td>
-                          <td className="px-2 md:px-6 py-4 md:py-5">
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                              <p className="flex items-center gap-1 text-[9px] md:text-xs text-blue-700 md:text-slate-700 font-bold leading-tight">
-                                <MapPin className="w-2.5 h-2.5 shrink-0 text-blue-500 md:text-slate-400" />
-                                <span className="truncate">
-                                  {item['Localisation (Commune ou adresse exacte)']}
-                                  {item['Code postal'] && <span className="text-slate-400 font-normal"> ({item['Code postal'].trim()})</span>}
-                                  <span className="hidden md:inline text-slate-400 font-normal"> • {item['Région']}</span>
-                                </span>
-                              </p>
-                              <p className="flex items-center gap-1 text-[8px] md:text-[11px] text-slate-600 font-semibold truncate">
-                                <Building2 className="w-2.5 h-2.5 md:w-3 md:h-3 shrink-0 text-slate-300 md:text-slate-400" />
-                                <span className="truncate">{item['Ministère']}</span>
-                              </p>
-                            </div>
-                          </td>
-                          <td className="hidden md:table-cell px-4 md:px-6 py-4 md:py-5">
-                            <div className="flex justify-center">
-                              <AvailabilityButton
-                                isTaken={taken.includes(item.Référence)}
-                                onClick={(e) => { e.stopPropagation(); toggleTaken(item.Référence); }}
-                              />
-                            </div>
-                          </td>
-                          <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
-                            {postSheetLink && (
-                              <a
-                                href={postSheetLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
-                                title="Voir la fiche"
-                              >
-                                <ExternalLink className="w-5 h-5" />
-                              </a>
-                            )}
-                          </td>
-                        </tr>
-                      </React.Fragment>
-                    )})}
+                        <ExplorerDesktopRow
+                          key={`${item.Référence}-${idx}`}
+                          item={item}
+                          isTaken={taken.includes(item.Référence)}
+                          isShortlisted={shortlisted.includes(item.Référence)}
+                          isExpanded={expandedIds.has(item.Référence)}
+                          noteValue={noteValue}
+                          toggleExpand={toggleExpand}
+                          toggleShortlist={toggleShortlist}
+                          toggleTaken={toggleTaken}
+                          onNoteChange={updatePostNote}
+                        />
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -1260,7 +1586,7 @@ export default function App() {
             </div>
             {rankedData.length > 0 ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-                <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-100">
+                <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-200">
                   <SortableContext items={shortlisted} strategy={verticalListSortingStrategy}>
                     {rankedData.map((item, idx) => (
                       <SortableItem
@@ -1273,6 +1599,8 @@ export default function App() {
                         toggleShortlist={toggleShortlist}
                         isExpanded={expandedIds.has(item.Référence)}
                         onToggle={toggleExpand}
+                        noteValue={notesByPostId[item.Référence] ?? ''}
+                        onNoteChange={updatePostNote}
                       />
                     ))}
                   </SortableContext>
