@@ -32,6 +32,11 @@ const getDesktopExplorerRow = () => {
   return rows[rows.length - 1]
 }
 
+const getMobileExplorerCard = () => {
+  const cards = document.querySelectorAll('[data-testid="mobile-post-card-REF-001"]')
+  return cards[cards.length - 1]
+}
+
 describe('App shared notes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -212,5 +217,38 @@ describe('App shared notes', () => {
 
     const rankingList = screen.getByTestId('ranking-post-row-REF-001').parentElement
     expect(rankingList?.className).toMatch(/divide-slate-200/)
+  })
+
+  it('uses the same passive mobile note logic as desktop', async () => {
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+
+    const mobileCard = getMobileExplorerCard()
+    expect(
+      within(mobileCard).queryByRole('button', {
+        name: /ajouter une note pour REF-001/i,
+      }),
+    ).toBeNull()
+    expect(within(mobileCard).queryByLabelText('Note')).toBeNull()
+  })
+
+  it('shows a passive mobile note indicator only when a note exists', async () => {
+    window.localStorage.setItem(
+      STORAGE_KEYS.notes,
+      JSON.stringify({ [TEST_POST.Référence]: 'Note mobile' }),
+    )
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+
+    const mobileCard = getMobileExplorerCard()
+    expect(within(mobileCard).getByLabelText('Note')).toBeTruthy()
+    expect(
+      within(mobileCard).queryByRole('button', {
+        name: /modifier une note pour REF-001/i,
+      }),
+    ).toBeNull()
   })
 })

@@ -708,7 +708,6 @@ const ExplorerMobileItem = ({
   onToggle,
   noteValue = '',
   isExpanded = false,
-  noteInputRef,
 }) => {
   const id = item.Référence;
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
@@ -742,14 +741,9 @@ const ExplorerMobileItem = ({
           <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="!px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[68px] !px-1 !py-0 !text-[7px]" />
-          <PostNoteButton
-            postId={id}
-            hasNote={hasNote}
-            isExpanded={isExpanded}
-            onOpen={onToggle}
-            onFocusEditor={() => noteInputRef.current?.focus()}
-            compact
-          />
+          {hasNote && (
+            <PassiveNoteIndicator className="ml-auto h-7 w-7 shrink-0" />
+          )}
           {postSheetLink && (
             <a
               href={postSheetLink}
