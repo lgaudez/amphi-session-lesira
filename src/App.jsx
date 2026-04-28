@@ -698,7 +698,7 @@ const ExplorerMobileItem = ({
       data-expanded={isExpanded ? 'true' : 'false'}
       onClick={() => onToggle(id)}
       className={cn(
-        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer border border-transparent rounded-t-[1.5rem]",
+        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer border border-transparent",
         isTaken && "opacity-50 grayscale bg-slate-50",
         isExpanded && "border-slate-100"
       )}
@@ -772,7 +772,7 @@ const ExplorerMobileEntry = ({
   const noteInputRef = useRef(null);
 
   return (
-    <div className={cn("px-2 pt-2", isExpanded && `rounded-[1.75rem] ${ROW_ACTIVE_ACCENT_CLASS}`)}>
+    <div className={cn("px-2 pt-2", isExpanded && ROW_ACTIVE_ACCENT_CLASS)}>
       <ExplorerMobileItem
         item={item}
         isTaken={isTaken}
