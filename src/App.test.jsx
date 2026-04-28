@@ -131,4 +131,53 @@ describe('App shared notes', () => {
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
     expect(rankingRow.querySelector('.lucide-chevron-down')).toBeNull()
   })
+
+  it('keeps the desktop note indicator in the post cell and the sheet CTA outside the note panel', async () => {
+    const user = userEvent.setup()
+
+    window.localStorage.setItem(
+      STORAGE_KEYS.notes,
+      JSON.stringify({ [TEST_POST.Référence]: 'Badge note' }),
+    )
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = getDesktopExplorerRow()
+    const postCell = desktopExplorerRow.children[1]
+    const actionCell = desktopExplorerRow.children[4]
+
+    expect(within(postCell).getByLabelText('Note')).toBeTruthy()
+    expect(within(actionCell).queryByLabelText('Note')).toBeNull()
+
+    await user.click(desktopExplorerRow)
+
+    const desktopExplorerDetailRow = desktopExplorerRow.nextElementSibling
+    const desktopNotePanel = within(desktopExplorerDetailRow).getByTestId('desktop-note-panel')
+    const desktopSheetCta = within(desktopExplorerDetailRow).getByTestId('desktop-sheet-cta')
+
+    expect(desktopNotePanel.contains(desktopSheetCta)).toBe(false)
+  })
+
+  it('keeps ranking desktop actions aligned when a note exists', async () => {
+    window.localStorage.setItem(
+      STORAGE_KEYS.notes,
+      JSON.stringify({ [TEST_POST.Référence]: 'Badge note' }),
+    )
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await userEvent.setup().click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    if (!within(rankingRow).queryByTitle('Voir la fiche')) {
+      await userEvent.setup().click(rankingRow)
+    }
+
+    const rankingActions = within(rankingRow).getByTestId('ranking-row-actions')
+
+    expect(within(rankingActions).getByLabelText('Note')).toBeTruthy()
+    expect(within(rankingActions).getByTitle('Voir la fiche')).toBeTruthy()
+  })
 })

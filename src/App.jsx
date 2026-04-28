@@ -224,10 +224,13 @@ const JobDetailCard = ({
             )}
           </div>
 
-          <div className={cn(
-            "space-y-4",
-            isDesktopSurface && "lg:rounded-[1.75rem] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:shadow-sm",
-          )}>
+          <div
+            data-testid={isDesktopSurface ? 'desktop-note-panel' : undefined}
+            className={cn(
+              "space-y-4",
+              isDesktopSurface && "lg:rounded-[1.75rem] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:shadow-sm",
+            )}
+          >
             <PostNotesEditor
               ref={noteInputRef}
               value={noteValue}
@@ -235,20 +238,20 @@ const JobDetailCard = ({
               label={`Notes pour ${postId}`}
               placeholder="Ajouter une note pour ce poste"
             />
-
-            {postSheetLink && isDesktopSurface && (
-              <a
-                href={postSheetLink}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
-              >
-                <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
-              </a>
-            )}
           </div>
         </div>
+        {postSheetLink && isDesktopSurface && (
+          <a
+            data-testid="desktop-sheet-cta"
+            href={postSheetLink}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
+          >
+            <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
+          </a>
+        )}
       </div>
     </div>
   );
@@ -288,7 +291,7 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
   <button
     onClick={onClick}
     className={cn(
-      "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm",
+      "w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 flex items-center justify-center transition-all shadow-sm group-hover:border-blue-300 group-hover:text-blue-500",
       isTaken
         ? "bg-blue-800 border-blue-800 text-white"
         : "bg-white border-slate-200 text-slate-300 hover:border-blue-300 hover:text-blue-400",
@@ -341,7 +344,7 @@ const PassiveNoteIndicator = ({ className }) => (
     aria-label="Note"
     title="Note enregistrée"
     className={cn(
-      "inline-flex items-center justify-center rounded-lg text-slate-400 transition-colors",
+      "inline-flex items-center justify-center rounded-xl border border-transparent text-slate-400 transition-colors",
       className
     )}
   >
@@ -393,6 +396,9 @@ const ExplorerDesktopRow = ({
               <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
               <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
               <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
+              {hasNote && (
+                <PassiveNoteIndicator className="ml-auto h-8 w-8 shrink-0 group-hover:border-blue-200 group-hover:text-blue-600" />
+              )}
             </div>
             <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
           </div>
@@ -423,16 +429,13 @@ const ExplorerDesktopRow = ({
         </td>
         <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
           <div className="flex items-center justify-end gap-3">
-            {hasNote && (
-              <PassiveNoteIndicator className="h-8 w-8 group-hover:text-blue-600" />
-            )}
             {postSheetLink && (
               <a
                 href={postSheetLink}
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center text-slate-300 hover:text-blue-600 transition-colors"
+                className="w-10 h-10 md:w-10 md:h-10 flex items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
                 title="Voir la fiche"
               >
                 <ExternalLink className="w-5 h-5" />
@@ -620,19 +623,23 @@ const SortableItem = ({
             onFocusEditor={() => noteInputRef.current?.focus()}
             className="ml-auto md:hidden"
           />
-          {hasNote && <PassiveNoteIndicator className="hidden h-8 w-8 md:inline-flex md:ml-auto group-hover:text-blue-600" />}
-          {!isExpanded && postSheetLink && (
-            <a
-              href={postSheetLink}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1 text-slate-300 hover:text-blue-600 transition-colors shrink-0"
-              title="Voir la fiche"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
+          <div data-testid="ranking-row-actions" className="ml-auto hidden shrink-0 md:flex items-center gap-1.5">
+            {hasNote && (
+              <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
+            )}
+            {!isExpanded && postSheetLink && (
+              <a
+                href={postSheetLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
+                title="Voir la fiche"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+          </div>
         </div>
 
         <h3 className={cn(
