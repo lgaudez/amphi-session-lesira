@@ -1,52 +1,51 @@
-import { isValidElement } from 'react'
+/* @vitest-environment jsdom */
+
+import React, { useState } from 'react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import PostNotesEditor from './PostNotesEditor'
 
-const findElement = (node, type) => {
-  if (!isValidElement(node)) {
-    return null
+const ControlledEditorHarness = ({ initialValue, onChange, placeholder }) => {
+  const [value, setValue] = useState(initialValue)
+
+  const handleChange = (nextValue) => {
+    setValue(nextValue)
+    onChange(nextValue)
   }
 
-  if (node.type === type) {
-    return node
-  }
-
-  const children = Array.isArray(node.props.children)
-    ? node.props.children
-    : [node.props.children]
-
-  for (const child of children) {
-    const match = findElement(child, type)
-
-    if (match) {
-      return match
-    }
-  }
-
-  return null
+  return (
+    <PostNotesEditor
+      value={value}
+      onChange={handleChange}
+      placeholder={placeholder}
+    />
+  )
 }
 
 describe('PostNotesEditor', () => {
-  it('renders the current note, exposes the placeholder, and emits changes', () => {
+  it('renders the current note, exposes the placeholder, and emits changes', async () => {
     const handleChange = vi.fn()
-    const tree = PostNotesEditor({
-      value: 'Current note',
-      onChange: handleChange,
-      placeholder: 'Ajouter une note personnelle',
-    })
-    const label = findElement(tree, 'label')
-    const labelText = findElement(tree, 'span')
-    const textarea = findElement(tree, 'textarea')
+    const user = userEvent.setup()
 
-    expect(label).not.toBeNull()
-    expect(labelText?.props.children).toBe('Notes')
-    expect(textarea).not.toBeNull()
-    expect(textarea.props.value).toBe('Current note')
-    expect(textarea.props.placeholder).toBe('Ajouter une note personnelle')
+    render(
+      <ControlledEditorHarness
+        initialValue="Current note"
+        onChange={handleChange}
+        placeholder="Ajouter une note personnelle"
+      />,
+    )
 
-    textarea.props.onChange({ target: { value: 'Updated note' } })
+    const textarea = screen.getByLabelText('Notes')
 
-    expect(handleChange).toHaveBeenCalledWith('Updated note')
+    expect(textarea.value).toBe('Current note')
+    expect(textarea.getAttribute('placeholder')).toBe('Ajouter une note personnelle')
+
+    await user.clear(textarea)
+    await user.type(textarea, 'Updated note')
+
+    expect(handleChange).toHaveBeenLastCalledWith('Updated note')
+    expect(textarea.value).toBe('Updated note')
   })
 })
