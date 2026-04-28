@@ -150,6 +150,7 @@ const JobDetailCard = ({
     <div
       data-testid={isMobileSurface ? 'job-detail-mobile' : 'job-detail-desktop'}
       data-layout={isDesktopSurface ? 'wide' : 'stacked'}
+      onClick={(e) => e.stopPropagation()}
       className={cn(
         "animate-in fade-in slide-in-from-top-2",
         isMobileSurface
@@ -623,23 +624,6 @@ const SortableItem = ({
             onFocusEditor={() => noteInputRef.current?.focus()}
             className="ml-auto md:hidden"
           />
-          <div data-testid="ranking-row-actions" className="ml-auto hidden shrink-0 md:flex items-center gap-1.5">
-            {hasNote && (
-              <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
-            )}
-            {!isExpanded && postSheetLink && (
-              <a
-                href={postSheetLink}
-                target="_blank"
-                rel="noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
-                title="Voir la fiche"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            )}
-          </div>
         </div>
 
         <h3 className={cn(
@@ -679,19 +663,38 @@ const SortableItem = ({
       </div>
 
       {/* Right side: Buttons stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:flex-row md:border-l-0 md:gap-2">
-        <AvailabilityButton
-          isTaken={isTaken}
-          onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
-          className="w-8 h-8 md:w-10 md:h-10"
-        />
-        <button
-          onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
-          className="p-1.5 md:p-2 text-amber-500 hover:text-red-500 transition-all"
-          title="Retirer du ranking"
-        >
-          <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
-        </button>
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:min-w-[88px] md:pl-3">
+        <div data-testid="ranking-row-actions" className="hidden md:flex items-center justify-center gap-1.5">
+          {hasNote && (
+            <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
+          )}
+          {!isExpanded && postSheetLink && (
+            <a
+              href={postSheetLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-transparent text-slate-300 hover:text-blue-600 transition-colors group-hover:border-blue-200 group-hover:text-blue-600"
+              title="Voir la fiche"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+        <div className="flex flex-col items-center justify-center gap-1 md:flex-row md:gap-2">
+          <AvailabilityButton
+            isTaken={isTaken}
+            onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
+            className="w-8 h-8 md:w-10 md:h-10"
+          />
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleShortlist(id); }}
+            className="p-1.5 md:p-2 text-amber-500 hover:text-red-500 transition-all"
+            title="Retirer du ranking"
+          >
+            <Star className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+          </button>
+        </div>
       </div>
     </div>
   );

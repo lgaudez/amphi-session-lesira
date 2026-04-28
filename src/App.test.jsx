@@ -180,4 +180,23 @@ describe('App shared notes', () => {
     expect(within(rankingActions).getByLabelText('Note')).toBeTruthy()
     expect(within(rankingActions).getByTitle('Voir la fiche')).toBeTruthy()
   })
+
+  it('does not collapse the ranking row when interacting with the note editor', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    await user.click(rankingRow)
+
+    const rankingNoteField = within(rankingRow).getByLabelText('Notes pour REF-001')
+    await user.click(rankingNoteField)
+    await user.type(rankingNoteField, 'abc')
+
+    expect(within(rankingRow).getByLabelText('Notes pour REF-001')).toBeTruthy()
+    expect(within(rankingRow).getByLabelText('Notes pour REF-001').value).toContain('abc')
+  })
 })
