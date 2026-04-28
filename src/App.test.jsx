@@ -199,4 +199,18 @@ describe('App shared notes', () => {
     expect(within(rankingRow).getByLabelText('Notes pour REF-001')).toBeTruthy()
     expect(within(rankingRow).getByLabelText('Notes pour REF-001').value).toContain('abc')
   })
+
+  it('uses stronger row separators in both desktop lists', async () => {
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+
+    const explorerTableBody = document.querySelector('tbody')
+    expect(explorerTableBody?.className).toMatch(/divide-slate-200/)
+
+    await userEvent.setup().click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingList = screen.getByTestId('ranking-post-row-REF-001').parentElement
+    expect(rankingList?.className).toMatch(/divide-slate-200/)
+  })
 })

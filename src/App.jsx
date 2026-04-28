@@ -1511,7 +1511,7 @@ export default function App() {
                   </select>
                 </div>
               </div>
-              <div className="md:hidden divide-y divide-slate-100">
+              <div className="md:hidden divide-y divide-slate-200">
                 {pagedData.map((item, idx) => (
                   <ExplorerMobileEntry
                     key={`${item.Référence}-${idx}`}
@@ -1538,7 +1538,7 @@ export default function App() {
                       <th className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest w-10 md:w-24">Fiche</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-200">
                     {pagedData.map((item, idx) => {
                       const noteValue = notesByPostId[item.Référence] ?? '';
                       return (
@@ -1618,7 +1618,7 @@ export default function App() {
             </div>
             {rankedData.length > 0 ? (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} modifiers={[restrictToVerticalAxis]}>
-                <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-100">
+                <div className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-xl divide-y divide-slate-200">
                   <SortableContext items={shortlisted} strategy={verticalListSortingStrategy}>
                     {rankedData.map((item, idx) => (
                       <SortableItem
