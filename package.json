@@ -7,15 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "test": "vitest run --config package.json",
+    "test": "vitest run",
     "preview": "vite preview"
-  },
-  "vitest": {
-    "test": {
-      "include": [
-        "src/lib/**/*.test.js"
-      ]
-    }
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
