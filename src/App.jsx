@@ -304,42 +304,6 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
   </button>
 );
 
-const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, onFocusEditor, compact = false, className }) => {
-  const label = `${hasNote ? 'Modifier' : 'Ajouter'} une note pour ${postId}`;
-
-  const handleClick = (event) => {
-    event.stopPropagation();
-
-    if (isExpanded) {
-      onFocusEditor?.();
-      return;
-    }
-
-    onOpen?.(postId);
-  };
-
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={hasNote ? 'Modifier la note' : 'Ajouter une note'}
-      data-has-note={hasNote ? 'true' : 'false'}
-      onClick={handleClick}
-      className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-1.5 border font-black uppercase shadow-sm transition-all",
-        compact ? "h-7 w-7 rounded-lg" : "h-8 rounded-xl px-2.5 text-[9px] tracking-widest",
-        hasNote
-          ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-          : "border-slate-200 bg-white text-slate-400 hover:border-blue-200 hover:text-blue-600",
-        className
-      )}
-    >
-      <FileText className="w-3.5 h-3.5" />
-      {!compact && <span>{hasNote ? 'Note' : 'Notes'}</span>}
-    </button>
-  );
-};
-
 const PassiveNoteIndicator = ({ className }) => (
   <span
     aria-label="Note"
@@ -616,14 +580,9 @@ const SortableItem = ({
           <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[95px] !px-2 !py-0.5 !text-[10px] md:max-w-[180px] md:!px-3 md:!py-1 md:!text-xs" />
-          <PostNoteButton
-            postId={id}
-            hasNote={hasNote}
-            isExpanded={isExpanded}
-            onOpen={onToggle}
-            onFocusEditor={() => noteInputRef.current?.focus()}
-            className="ml-auto md:hidden"
-          />
+          {hasNote && (
+            <PassiveNoteIndicator className="ml-auto h-7 w-7 shrink-0 md:hidden" />
+          )}
         </div>
 
         <h3 className={cn(

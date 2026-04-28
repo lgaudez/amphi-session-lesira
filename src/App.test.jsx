@@ -70,7 +70,7 @@ describe('App shared notes', () => {
     await user.click(screen.getByRole('button', { name: /mon ranking/i }))
 
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
-    expect(within(rankingRow).getByLabelText('Note')).toBeTruthy()
+    expect(within(rankingRow).getAllByLabelText('Note').length).toBeGreaterThan(0)
 
     let rankingNoteField = screen.queryByLabelText('Notes pour REF-001')
     if (!rankingNoteField) {
@@ -247,6 +247,42 @@ describe('App shared notes', () => {
     expect(within(mobileCard).getByLabelText('Note')).toBeTruthy()
     expect(
       within(mobileCard).queryByRole('button', {
+        name: /modifier une note pour REF-001/i,
+      }),
+    ).toBeNull()
+  })
+
+  it('uses the same passive mobile note logic in ranking rows', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    expect(
+      within(rankingRow).queryByRole('button', {
+        name: /ajouter une note pour REF-001/i,
+      }),
+    ).toBeNull()
+  })
+
+  it('shows a passive ranking mobile note indicator only when a note exists', async () => {
+    window.localStorage.setItem(
+      STORAGE_KEYS.notes,
+      JSON.stringify({ [TEST_POST.Référence]: 'Note ranking mobile' }),
+    )
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await userEvent.setup().click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    expect(within(rankingRow).getAllByLabelText('Note').length).toBeGreaterThan(0)
+    expect(
+      within(rankingRow).queryByRole('button', {
         name: /modifier une note pour REF-001/i,
       }),
     ).toBeNull()
