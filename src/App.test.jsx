@@ -287,4 +287,19 @@ describe('App shared notes', () => {
       }),
     ).toBeNull()
   })
+
+  it('shows the ranking mobile title only once when expanded', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    await user.click(rankingRow)
+
+    const titleMatches = within(rankingRow).getAllByText(TEST_POST['Intitulé du poste'])
+    expect(titleMatches).toHaveLength(1)
+  })
 })

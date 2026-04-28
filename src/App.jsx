@@ -144,6 +144,7 @@ const JobDetailCard = ({
   const postSheetLink = getPostSheetLink(item);
   const postId = item.Référence;
   const isMobileSurface = surface === 'mobile';
+  const isRankingSurface = surface === 'ranking';
   const isDesktopSurface = surface === 'desktop' || surface === 'ranking';
 
   return (
@@ -155,14 +156,16 @@ const JobDetailCard = ({
         "animate-in fade-in slide-in-from-top-2",
         isMobileSurface
           ? "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]"
-          : "px-4 py-8 bg-slate-50 border-t-2 border-blue-100",
+          : isRankingSurface
+            ? "px-0 pb-4 pt-4 md:px-4 md:py-8 bg-slate-50 border-t-2 border-blue-100"
+            : "px-4 py-8 bg-slate-50 border-t-2 border-blue-100",
       )}
     >
       <div
         className={cn(
           "mx-auto w-full text-left",
           isDesktopSurface
-            ? "max-w-none space-y-6"
+            ? "max-w-none space-y-4 md:space-y-6"
             : "max-w-md space-y-6",
         )}
       >
@@ -178,10 +181,10 @@ const JobDetailCard = ({
 
         <div className={cn(
           "gap-6",
-          isDesktopSurface ? "grid lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.95fr)] lg:items-start" : "space-y-6",
+          isDesktopSurface ? "grid gap-4 md:gap-6 lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.95fr)] lg:items-start" : "space-y-6",
         )}>
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-5 md:gap-x-8 md:gap-y-6">
               <div className="space-y-2">
                 <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
                   <Building2 className="w-3.5 h-3.5" /> Ministère
@@ -561,7 +564,7 @@ const SortableItem = ({
       )}
     >
       {/* Left side: Rank + Handle stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-1 border-r border-slate-100 self-stretch">
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-1 border-r border-slate-100 self-start md:self-stretch">
         <div
           {...attributes}
           {...listeners}
@@ -588,6 +591,7 @@ const SortableItem = ({
         <h3 className={cn(
           "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors",
           !isExpanded && "truncate",
+          isExpanded && "hidden md:block",
           isTaken && "line-through"
         )}>
           {item['Intitulé du poste']}
@@ -622,7 +626,7 @@ const SortableItem = ({
       </div>
 
       {/* Right side: Buttons stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:min-w-[112px] md:justify-between md:gap-3 md:pl-4">
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-start md:min-w-[112px] md:self-stretch md:justify-between md:gap-3 md:pl-4">
         <div data-testid="ranking-row-actions" className="hidden md:flex min-h-8 items-center justify-center gap-1.5">
           {hasNote && (
             <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
