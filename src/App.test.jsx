@@ -27,6 +27,11 @@ const TEST_POST = {
   Thématique: 'Transformation',
 }
 
+const getDesktopExplorerRow = () => {
+  const rows = document.querySelectorAll('[data-testid="desktop-post-row-REF-001-desktop"]')
+  return rows[rows.length - 1]
+}
+
 describe('App shared notes', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -44,15 +49,9 @@ describe('App shared notes', () => {
 
     render(<App />)
 
-    const desktopExplorerRow = await screen.findByRole('row', {
-      name: /REF-001.*Poste test partage/i,
-    })
-
-    await user.click(
-      within(desktopExplorerRow).getByRole('button', {
-        name: /ajouter une note pour REF-001/i,
-      }),
-    )
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = getDesktopExplorerRow()
+    await user.click(desktopExplorerRow)
 
     const desktopExplorerDetailRow = desktopExplorerRow.nextElementSibling
     expect(desktopExplorerDetailRow).not.toBeNull()
@@ -61,14 +60,7 @@ describe('App shared notes', () => {
 
     fireEvent.change(desktopExplorerNoteField, { target: { value: 'Note partagee' } })
 
-    const visibleDesktopNoteButton = within(desktopExplorerRow).getByRole('button', {
-      name: /modifier une note pour REF-001/i,
-    })
-    expect(visibleDesktopNoteButton.getAttribute('data-has-note')).toBe('true')
-
-    await user.click(visibleDesktopNoteButton)
-
-    expect(document.activeElement).toBe(desktopExplorerNoteField)
+    expect(within(desktopExplorerRow).getByText('Note')).toBeTruthy()
 
     await user.click(screen.getByRole('button', { name: /mon ranking/i }))
 
@@ -88,15 +80,9 @@ describe('App shared notes', () => {
 
     render(<App />)
 
-    const desktopExplorerRow = await screen.findByRole('row', {
-      name: /REF-001.*Poste test partage/i,
-    })
-
-    await user.click(
-      within(desktopExplorerRow).getByRole('button', {
-        name: /ajouter une note pour REF-001/i,
-      }),
-    )
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = getDesktopExplorerRow()
+    await user.click(desktopExplorerRow)
 
     const desktopExplorerDetailRow = desktopExplorerRow.nextElementSibling
     expect(desktopExplorerDetailRow).not.toBeNull()
@@ -110,5 +96,25 @@ describe('App shared notes', () => {
 
     const mobileDetailSurface = screen.getByTestId('job-detail-mobile')
     expect(mobileDetailSurface.className).toMatch(/amber/)
+  })
+
+  it('uses the desktop row itself as the note entry point and only shows a passive note badge once a note exists', async () => {
+    window.localStorage.setItem(
+      STORAGE_KEYS.notes,
+      JSON.stringify({ [TEST_POST.Référence]: 'Badge note' }),
+    )
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = getDesktopExplorerRow()
+
+    expect(
+      within(desktopExplorerRow).queryByRole('button', {
+        name: /ajouter une note pour REF-001/i,
+      }),
+    ).toBeNull()
+
+    expect(within(desktopExplorerRow).getByText('Note')).toBeTruthy()
   })
 })
