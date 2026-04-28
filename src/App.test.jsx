@@ -100,6 +100,8 @@ describe('App shared notes', () => {
     const desktopDetailSurface = within(desktopExplorerDetailRow).getByTestId('job-detail-desktop')
     expect(desktopDetailSurface.getAttribute('data-layout')).toBe('wide')
     expect(desktopDetailSurface.querySelector('.max-w-md')).toBeNull()
+    expect(desktopExplorerRow.className).toMatch(/amber/)
+    expect(desktopDetailSurface.className).toMatch(/amber/)
 
     const mobileActiveCard = screen.getByTestId('mobile-post-card-REF-001')
     expect(mobileActiveCard.getAttribute('data-expanded')).toBe('true')
@@ -314,8 +316,18 @@ describe('App shared notes', () => {
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
     fireEvent.click(within(rankingRow).getByText(TEST_POST['Intitulé du poste']))
 
+    expect(rankingRow.className).toMatch(/amber/)
     expect(within(rankingRow).queryByText(/consulter la fiche de poste/i)).toBeNull()
-    expect(within(rankingRow).getByTitle('Voir la fiche')).toBeTruthy()
-    expect(await screen.findByTestId('job-detail-desktop')).toBeTruthy()
+    const rankingDetailSurface = await screen.findByTestId('job-detail-desktop')
+    expect(rankingDetailSurface.className).toMatch(/amber/)
+
+    const rankingDetailHeader = within(rankingDetailSurface).getByTestId('detail-header')
+    const rankingDetailMeta = within(rankingDetailHeader).getByTestId('detail-header-meta')
+    const rankingDetailTitle = within(rankingDetailHeader).getByTestId('detail-header-title')
+
+    expect(within(rankingDetailMeta).getByText(/détails du poste/i)).toBeTruthy()
+    expect(within(rankingDetailMeta).getByTitle('Voir la fiche')).toBeTruthy()
+    expect(within(rankingDetailTitle).getByText(TEST_POST['Intitulé du poste'])).toBeTruthy()
+    expect(within(rankingDetailHeader).queryByText(/consulter la fiche de poste/i)).toBeNull()
   })
 })

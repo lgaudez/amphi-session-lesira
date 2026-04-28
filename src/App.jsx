@@ -146,6 +146,22 @@ const JobDetailCard = ({
   const isMobileSurface = surface === 'mobile';
   const isRankingSurface = surface === 'ranking';
   const isDesktopSurface = surface === 'desktop' || surface === 'ranking';
+  const detailSurfaceClass = isDesktopSurface
+    ? "px-0 pb-4 pt-3 md:px-4 md:py-8 bg-amber-50/70 border-t border-amber-200 shadow-[inset_0_1px_0_rgba(251,191,36,0.3)]"
+    : "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]";
+  const detailLabelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-amber-700";
+  const detailHeaderAction = postSheetLink && isRankingSurface ? (
+    <a
+      href={postSheetLink}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-amber-200 bg-white/90 text-slate-400 shadow-sm transition-colors hover:text-blue-600"
+      title="Voir la fiche"
+    >
+      <ExternalLink className="w-3 h-3" />
+    </a>
+  ) : null;
 
   return (
     <div
@@ -154,11 +170,7 @@ const JobDetailCard = ({
       onClick={(e) => e.stopPropagation()}
       className={cn(
         "animate-in fade-in slide-in-from-top-2",
-        isMobileSurface
-          ? "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]"
-          : isRankingSurface
-            ? "px-0 pb-4 pt-3 md:px-4 md:py-8 bg-slate-50"
-            : "px-4 py-8 bg-slate-50 border-t-2 border-blue-100",
+        detailSurfaceClass,
       )}
     >
       <div
@@ -169,26 +181,12 @@ const JobDetailCard = ({
             : "max-w-md space-y-6",
         )}
       >
-        <div className="flex justify-between items-start gap-4">
-          <div className="space-y-1">
-            <h4 className={cn(
-              "text-[10px] font-black uppercase tracking-[0.2em]",
-              isMobileSurface ? "text-amber-700" : "text-blue-600",
-            )}>Détails du poste</h4>
-            <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
+        <div data-testid="detail-header" className="space-y-1">
+          <div data-testid="detail-header-meta" className="flex items-center gap-2">
+            <h4 className={detailLabelClass}>Détails du poste</h4>
+            {detailHeaderAction}
           </div>
-          {postSheetLink && isRankingSurface && (
-            <a
-              href={postSheetLink}
-              target="_blank"
-              rel="noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-blue-600"
-              title="Voir la fiche"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          )}
+          <p data-testid="detail-header-title" className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
         </div>
 
         <div className={cn(
@@ -358,7 +356,7 @@ const ExplorerDesktopRow = ({
           isTaken && "opacity-40 grayscale bg-slate-50/50",
           isShortlisted && "bg-amber-50/20",
           isExpanded
-            ? "bg-blue-50/60 shadow-[inset_0_-1px_0_rgba(59,130,246,0.12),inset_3px_0_0_rgba(59,130,246,0.9)]"
+            ? "bg-amber-50/70 shadow-[inset_0_-1px_0_rgba(251,191,36,0.2),inset_3px_0_0_rgba(245,158,11,0.9)]"
             : "hover:bg-slate-50/80 hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]"
         )}
       >
@@ -425,7 +423,7 @@ const ExplorerDesktopRow = ({
         </td>
       </tr>
       {isExpanded && (
-        <tr className="bg-slate-50">
+        <tr className="bg-amber-50/70">
           <td colSpan={5} className="p-0">
             <JobDetailCard
               item={item}
@@ -571,7 +569,7 @@ const SortableItem = ({
         "bg-white flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all group relative cursor-pointer",
         isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
         !isDragging && "hover:bg-slate-50/50 md:hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]",
-        isExpanded && "md:bg-blue-50/60 md:shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]",
+        isExpanded && "bg-amber-50/70 shadow-[inset_3px_0_0_rgba(245,158,11,0.9)]",
         isTaken && "opacity-50 grayscale bg-slate-50"
       )}
     >
