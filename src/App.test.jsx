@@ -100,14 +100,18 @@ describe('App shared notes', () => {
     const desktopDetailSurface = within(desktopExplorerDetailRow).getByTestId('job-detail-desktop')
     expect(desktopDetailSurface.getAttribute('data-layout')).toBe('wide')
     expect(desktopDetailSurface.querySelector('.max-w-md')).toBeNull()
-    expect(desktopExplorerRow.className).toMatch(/amber/)
-    expect(desktopDetailSurface.className).toMatch(/amber/)
+    expect(desktopExplorerRow.className).toMatch(/59,130,246/)
+    expect(desktopExplorerRow.className).not.toMatch(/amber/)
+    expect(desktopDetailSurface.className).toMatch(/59,130,246/)
+    expect(desktopDetailSurface.className).not.toMatch(/amber/)
 
     const mobileActiveCard = screen.getByTestId('mobile-post-card-REF-001')
     expect(mobileActiveCard.getAttribute('data-expanded')).toBe('true')
+    expect(mobileActiveCard.parentElement?.className).toMatch(/59,130,246/)
+    expect(mobileActiveCard.parentElement?.className).not.toMatch(/amber/)
 
     const mobileDetailSurface = screen.getByTestId('job-detail-mobile')
-    expect(mobileDetailSurface.className).toMatch(/amber/)
+    expect(mobileDetailSurface.className).not.toMatch(/amber/)
   })
 
   it('uses the desktop row itself as the note entry point and only shows a passive note badge once a note exists', async () => {
@@ -316,10 +320,11 @@ describe('App shared notes', () => {
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
     fireEvent.click(within(rankingRow).getByText(TEST_POST['Intitulé du poste']))
 
-    expect(rankingRow.className).toMatch(/amber/)
+    expect(rankingRow.className).toMatch(/59,130,246/)
+    expect(rankingRow.className).not.toMatch(/amber/)
     expect(within(rankingRow).queryByText(/consulter la fiche de poste/i)).toBeNull()
     const rankingDetailSurface = await screen.findByTestId('job-detail-desktop')
-    expect(rankingDetailSurface.className).toMatch(/amber/)
+    expect(rankingDetailSurface.className).not.toMatch(/amber/)
 
     const rankingDetailHeader = within(rankingDetailSurface).getByTestId('detail-header')
     const rankingDetailMeta = within(rankingDetailHeader).getByTestId('detail-header-meta')

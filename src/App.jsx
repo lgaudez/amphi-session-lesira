@@ -146,17 +146,19 @@ const JobDetailCard = ({
   const isMobileSurface = surface === 'mobile';
   const isRankingSurface = surface === 'ranking';
   const isDesktopSurface = surface === 'desktop' || surface === 'ranking';
-  const detailSurfaceClass = isDesktopSurface
-    ? "px-0 pb-4 pt-3 md:px-4 md:py-8 bg-amber-50/70 border-t border-amber-200 shadow-[inset_0_1px_0_rgba(251,191,36,0.3)]"
-    : "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]";
-  const detailLabelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-amber-700";
+  const detailSurfaceClass = isRankingSurface
+    ? "px-0 pb-4 pt-3 md:px-4 md:py-8 border-t border-slate-100 bg-white"
+    : isDesktopSurface
+      ? `px-0 pb-4 pt-3 md:px-4 md:py-8 border-t border-slate-100 ${DETAIL_ACTIVE_ACCENT_CLASS}`
+      : "px-4 pb-6 pt-5 border-x border-b border-slate-100 bg-white";
+  const detailLabelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-blue-600";
   const detailHeaderAction = postSheetLink && isRankingSurface ? (
     <a
       href={postSheetLink}
       target="_blank"
       rel="noreferrer"
       onClick={(e) => e.stopPropagation()}
-      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-amber-200 bg-white/90 text-slate-400 shadow-sm transition-colors hover:text-blue-600"
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-600"
       title="Voir la fiche"
     >
       <ExternalLink className="w-3 h-3" />
@@ -330,6 +332,10 @@ const PassiveNoteIndicator = ({ className }) => (
   </span>
 );
 
+const ROW_ACTIVE_ACCENT_CLASS = "shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]";
+const ROW_HOVER_ACCENT_CLASS = "hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]";
+const DETAIL_ACTIVE_ACCENT_CLASS = "bg-white shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]";
+
 const ExplorerDesktopRow = ({
   item,
   isTaken,
@@ -354,10 +360,9 @@ const ExplorerDesktopRow = ({
         className={cn(
           "transition-all group cursor-pointer",
           isTaken && "opacity-40 grayscale bg-slate-50/50",
-          isShortlisted && "bg-amber-50/20",
           isExpanded
-            ? "bg-amber-50/70 shadow-[inset_0_-1px_0_rgba(251,191,36,0.2),inset_3px_0_0_rgba(245,158,11,0.9)]"
-            : "hover:bg-slate-50/80 hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]"
+            ? ROW_ACTIVE_ACCENT_CLASS
+            : `hover:bg-slate-50/80 ${ROW_HOVER_ACCENT_CLASS}`
         )}
       >
         <td className="px-2 md:px-6 py-4 md:py-5 text-center">
@@ -423,7 +428,7 @@ const ExplorerDesktopRow = ({
         </td>
       </tr>
       {isExpanded && (
-        <tr className="bg-amber-50/70">
+        <tr className="bg-white">
           <td colSpan={5} className="p-0">
             <JobDetailCard
               item={item}
@@ -568,8 +573,8 @@ const SortableItem = ({
       className={cn(
         "bg-white flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all group relative cursor-pointer",
         isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
-        !isDragging && "hover:bg-slate-50/50 md:hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]",
-        isExpanded && "bg-amber-50/70 shadow-[inset_3px_0_0_rgba(245,158,11,0.9)]",
+        !isDragging && `hover:bg-slate-50/50 md:${ROW_HOVER_ACCENT_CLASS}`,
+        isExpanded && ROW_ACTIVE_ACCENT_CLASS,
         isTaken && "opacity-50 grayscale bg-slate-50"
       )}
     >
@@ -695,8 +700,7 @@ const ExplorerMobileItem = ({
       className={cn(
         "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer border border-transparent rounded-t-[1.5rem]",
         isTaken && "opacity-50 grayscale bg-slate-50",
-        isShortlisted && "bg-amber-50/20",
-        isExpanded && "bg-amber-50 border-amber-200 shadow-sm ring-1 ring-amber-100"
+        isExpanded && "border-slate-100"
       )}
     >
       <div className="shrink-0 pt-1">
@@ -768,7 +772,7 @@ const ExplorerMobileEntry = ({
   const noteInputRef = useRef(null);
 
   return (
-    <div className={cn("px-2 pt-2", isExpanded && "rounded-[1.75rem] bg-amber-50/40")}>
+    <div className={cn("px-2 pt-2", isExpanded && `rounded-[1.75rem] ${ROW_ACTIVE_ACCENT_CLASS}`)}>
       <ExplorerMobileItem
         item={item}
         isTaken={isTaken}
