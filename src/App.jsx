@@ -343,6 +343,19 @@ const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, onFocusEd
   );
 };
 
+const PassiveNoteIndicator = ({ className }) => (
+  <span
+    aria-label="Note"
+    title="Note enregistrée"
+    className={cn(
+      "inline-flex items-center justify-center rounded-lg text-slate-400 transition-colors",
+      className
+    )}
+  >
+    <FileText className="w-3.5 h-3.5" />
+  </span>
+);
+
 const ExplorerDesktopRow = ({
   item,
   isTaken,
@@ -368,7 +381,9 @@ const ExplorerDesktopRow = ({
           "transition-all group cursor-pointer",
           isTaken && "opacity-40 grayscale bg-slate-50/50",
           isShortlisted && "bg-amber-50/20",
-          isExpanded ? "bg-blue-50/60 shadow-[inset_0_-1px_0_rgba(59,130,246,0.12)]" : "hover:bg-slate-50/80"
+          isExpanded
+            ? "bg-blue-50/60 shadow-[inset_0_-1px_0_rgba(59,130,246,0.12),inset_3px_0_0_rgba(59,130,246,0.9)]"
+            : "hover:bg-slate-50/80 hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]"
         )}
       >
         <td className="px-2 md:px-6 py-4 md:py-5 text-center">
@@ -385,12 +400,6 @@ const ExplorerDesktopRow = ({
               <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
               <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
               <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
-              {hasNote && (
-                <span className="inline-flex items-center gap-1 rounded-xl border border-blue-200 bg-blue-50 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-blue-700">
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>Note</span>
-                </span>
-              )}
             </div>
             <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
           </div>
@@ -420,7 +429,10 @@ const ExplorerDesktopRow = ({
           </div>
         </td>
         <td className="hidden md:table-cell px-2 md:px-6 py-4 md:py-5 text-right">
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-3">
+            {hasNote && (
+              <PassiveNoteIndicator className="h-8 w-8 group-hover:text-blue-600" />
+            )}
             {postSheetLink && (
               <a
                 href={postSheetLink}
@@ -436,8 +448,9 @@ const ExplorerDesktopRow = ({
             <span
               aria-hidden="true"
               className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 transition-all",
-                isExpanded && "border-blue-200 bg-blue-50 text-blue-600"
+                "inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 transition-all opacity-0 group-hover:opacity-100",
+                isExpanded && "border-blue-200 bg-blue-50 text-blue-600 opacity-100",
+                !isExpanded && "group-hover:border-blue-200 group-hover:text-blue-600"
               )}
             >
               <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
@@ -584,13 +597,15 @@ const SortableItem = ({
 
   return (
     <div
+      data-testid={`ranking-post-row-${id}`}
       ref={setNodeRef}
       style={style}
       onClick={() => onToggle(id)}
       className={cn(
         "bg-white flex items-start gap-2 md:gap-4 p-2 md:p-4 transition-all group relative cursor-pointer",
         isDragging && "shadow-2xl ring-2 ring-blue-500/20 bg-slate-50 z-10",
-        !isDragging && "hover:bg-slate-50/50",
+        !isDragging && "hover:bg-slate-50/50 md:hover:shadow-[inset_3px_0_0_rgba(59,130,246,0.7)]",
+        isExpanded && "md:bg-blue-50/60 md:shadow-[inset_3px_0_0_rgba(59,130,246,0.9)]",
         isTaken && "opacity-50 grayscale bg-slate-50"
       )}
     >
@@ -620,8 +635,9 @@ const SortableItem = ({
             isExpanded={isExpanded}
             onOpen={onToggle}
             onFocusEditor={() => noteInputRef.current?.focus()}
-            className="ml-auto"
+            className="ml-auto md:hidden"
           />
+          {hasNote && <PassiveNoteIndicator className="hidden h-8 w-8 md:inline-flex md:ml-auto group-hover:text-blue-600" />}
           {!isExpanded && postSheetLink && (
             <a
               href={postSheetLink}
@@ -634,6 +650,16 @@ const SortableItem = ({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "hidden md:inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 transition-all opacity-0 group-hover:opacity-100",
+              isExpanded && "border-blue-200 bg-blue-50 text-blue-600 opacity-100",
+              !isExpanded && "group-hover:border-blue-200 group-hover:text-blue-600"
+            )}
+          >
+            <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
+          </span>
         </div>
 
         <h3 className={cn(

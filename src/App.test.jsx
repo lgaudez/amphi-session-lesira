@@ -60,18 +60,19 @@ describe('App shared notes', () => {
 
     fireEvent.change(desktopExplorerNoteField, { target: { value: 'Note partagee' } })
 
-    expect(within(desktopExplorerRow).getByText('Note')).toBeTruthy()
+    expect(within(desktopExplorerRow).getByLabelText('Note')).toBeTruthy()
 
     await user.click(screen.getByRole('button', { name: /mon ranking/i }))
 
-    const rankingNoteButton = screen.getByRole('button', {
-      name: /modifier une note pour REF-001/i,
-    })
-    expect(rankingNoteButton.getAttribute('data-has-note')).toBe('true')
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    expect(within(rankingRow).getByLabelText('Note')).toBeTruthy()
 
-    await user.click(rankingNoteButton)
+    let rankingNoteField = screen.queryByLabelText('Notes pour REF-001')
+    if (!rankingNoteField) {
+      await user.click(rankingRow)
+      rankingNoteField = screen.getByLabelText('Notes pour REF-001')
+    }
 
-    const rankingNoteField = screen.getByLabelText('Notes pour REF-001')
     expect(rankingNoteField.value).toBe('Note partagee')
   })
 
@@ -115,6 +116,6 @@ describe('App shared notes', () => {
       }),
     ).toBeNull()
 
-    expect(within(desktopExplorerRow).getByText('Note')).toBeTruthy()
+    expect(within(desktopExplorerRow).getByLabelText('Note')).toBeTruthy()
   })
 })
