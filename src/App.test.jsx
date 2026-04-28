@@ -118,4 +118,17 @@ describe('App shared notes', () => {
 
     expect(within(desktopExplorerRow).getByLabelText('Note')).toBeTruthy()
   })
+
+  it('does not render a separate chevron affordance in desktop rows', async () => {
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    const desktopExplorerRow = getDesktopExplorerRow()
+    expect(desktopExplorerRow.querySelector('.lucide-chevron-down')).toBeNull()
+
+    await userEvent.setup().click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    expect(rankingRow.querySelector('.lucide-chevron-down')).toBeNull()
+  })
 })

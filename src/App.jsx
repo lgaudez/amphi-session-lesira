@@ -135,7 +135,6 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
 const JobDetailCard = ({
   item,
   isExpanded,
-  onToggle,
   noteValue = '',
   onNoteChange,
   noteInputRef,
@@ -174,12 +173,6 @@ const JobDetailCard = ({
             )}>Détails du poste</h4>
             <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
           </div>
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggle(item.Référence); }}
-            className="p-2 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-400 hover:text-blue-600 transition-colors"
-          >
-            <ChevronDown className="w-5 h-5 rotate-180" />
-          </button>
         </div>
 
         <div className={cn(
@@ -445,16 +438,6 @@ const ExplorerDesktopRow = ({
                 <ExternalLink className="w-5 h-5" />
               </a>
             )}
-            <span
-              aria-hidden="true"
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 transition-all opacity-0 group-hover:opacity-100",
-                isExpanded && "border-blue-200 bg-blue-50 text-blue-600 opacity-100",
-                !isExpanded && "group-hover:border-blue-200 group-hover:text-blue-600"
-              )}
-            >
-              <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
-            </span>
           </div>
         </td>
       </tr>
@@ -650,16 +633,6 @@ const SortableItem = ({
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
-          <span
-            aria-hidden="true"
-            className={cn(
-              "hidden md:inline-flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-300 transition-all opacity-0 group-hover:opacity-100",
-              isExpanded && "border-blue-200 bg-blue-50 text-blue-600 opacity-100",
-              !isExpanded && "group-hover:border-blue-200 group-hover:text-blue-600"
-            )}
-          >
-            <ChevronDown className={cn("w-4 h-4 transition-transform", isExpanded && "rotate-180")} />
-          </span>
         </div>
 
         <h3 className={cn(
