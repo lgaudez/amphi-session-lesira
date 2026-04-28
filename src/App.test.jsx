@@ -82,4 +82,33 @@ describe('App shared notes', () => {
     const rankingNoteField = screen.getByLabelText('Notes pour REF-001')
     expect(rankingNoteField.value).toBe('Note partagee')
   })
+
+  it('marks the mobile post as active and uses a wide desktop detail layout when expanded', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    const desktopExplorerRow = await screen.findByRole('row', {
+      name: /REF-001.*Poste test partage/i,
+    })
+
+    await user.click(
+      within(desktopExplorerRow).getByRole('button', {
+        name: /ajouter une note pour REF-001/i,
+      }),
+    )
+
+    const desktopExplorerDetailRow = desktopExplorerRow.nextElementSibling
+    expect(desktopExplorerDetailRow).not.toBeNull()
+
+    const desktopDetailSurface = within(desktopExplorerDetailRow).getByTestId('job-detail-desktop')
+    expect(desktopDetailSurface.getAttribute('data-layout')).toBe('wide')
+    expect(desktopDetailSurface.querySelector('.max-w-md')).toBeNull()
+
+    const mobileActiveCard = screen.getByTestId('mobile-post-card-REF-001')
+    expect(mobileActiveCard.getAttribute('data-expanded')).toBe('true')
+
+    const mobileDetailSurface = screen.getByTestId('job-detail-mobile')
+    expect(mobileDetailSurface.className).toMatch(/amber/)
+  })
 })

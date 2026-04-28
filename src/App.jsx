@@ -132,17 +132,46 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
   </div>
 );
 
-const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChange, noteInputRef }) => {
+const JobDetailCard = ({
+  item,
+  isExpanded,
+  onToggle,
+  noteValue = '',
+  onNoteChange,
+  noteInputRef,
+  surface = 'default',
+}) => {
   if (!isExpanded) return null;
   const postSheetLink = getPostSheetLink(item);
   const postId = item.Référence;
+  const isMobileSurface = surface === 'mobile';
+  const isDesktopSurface = surface === 'desktop' || surface === 'ranking';
 
   return (
-    <div className="px-4 py-8 bg-slate-50 border-t-2 border-blue-100 animate-in fade-in slide-in-from-top-2">
-      <div className="max-w-md mx-auto space-y-6 text-left">
+    <div
+      data-testid={isMobileSurface ? 'job-detail-mobile' : 'job-detail-desktop'}
+      data-layout={isDesktopSurface ? 'wide' : 'stacked'}
+      className={cn(
+        "animate-in fade-in slide-in-from-top-2",
+        isMobileSurface
+          ? "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]"
+          : "px-4 py-8 bg-slate-50 border-t-2 border-blue-100",
+      )}
+    >
+      <div
+        className={cn(
+          "mx-auto w-full text-left",
+          isDesktopSurface
+            ? "max-w-none space-y-6"
+            : "max-w-md space-y-6",
+        )}
+      >
         <div className="flex justify-between items-start gap-4">
           <div className="space-y-1">
-            <h4 className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Détails du poste</h4>
+            <h4 className={cn(
+              "text-[10px] font-black uppercase tracking-[0.2em]",
+              isMobileSurface ? "text-amber-700" : "text-blue-600",
+            )}>Détails du poste</h4>
             <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
           </div>
           <button
@@ -153,56 +182,80 @@ const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChang
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <Building2 className="w-3.5 h-3.5" /> Ministère
-            </p>
-            <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Ministère']}</p>
+        <div className={cn(
+          "gap-6",
+          isDesktopSurface ? "grid lg:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.95fr)] lg:items-start" : "space-y-6",
+        )}>
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <Building2 className="w-3.5 h-3.5" /> Ministère
+                </p>
+                <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Ministère']}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <MapPin className="w-3.5 h-3.5" /> Localisation
+                </p>
+                <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Localisation (Commune ou adresse exacte)']}</p>
+                <p className="text-[10px] text-slate-500 font-black tracking-tighter mt-1">{item['Code postal']} — {item['Région']}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <Briefcase className="w-3.5 h-3.5" /> Environnement
+                </p>
+                <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
+                  <RotateCcw className="w-3.5 h-3.5" /> Thématique
+                </p>
+                <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
+              </div>
+            </div>
+
+            {postSheetLink && !isDesktopSurface && (
+              <a
+                href={postSheetLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
+              >
+                <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
+              </a>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <MapPin className="w-3.5 h-3.5" /> Localisation
-            </p>
-            <p className="text-[11px] font-bold text-slate-800 leading-snug">{item['Localisation (Commune ou adresse exacte)']}</p>
-            <p className="text-[10px] text-slate-500 font-black tracking-tighter mt-1">{item['Code postal']} — {item['Région']}</p>
-          </div>
+          <div className={cn(
+            "space-y-4",
+            isDesktopSurface && "lg:rounded-[1.75rem] lg:border lg:border-slate-200 lg:bg-white lg:p-5 lg:shadow-sm",
+          )}>
+            <PostNotesEditor
+              ref={noteInputRef}
+              value={noteValue}
+              onChange={(nextValue) => onNoteChange?.(postId, nextValue)}
+              label={`Notes pour ${postId}`}
+              placeholder="Ajouter une note pour ce poste"
+            />
 
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <Briefcase className="w-3.5 h-3.5" /> Environnement
-            </p>
-            <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
-          </div>
-
-          <div className="space-y-2">
-            <p className="flex items-center gap-2 text-[9px] uppercase text-slate-400 font-black tracking-widest">
-              <RotateCcw className="w-3.5 h-3.5" /> Thématique
-            </p>
-            <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
+            {postSheetLink && isDesktopSurface && (
+              <a
+                href={postSheetLink}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
+              >
+                <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
+              </a>
+            )}
           </div>
         </div>
-
-        <PostNotesEditor
-          ref={noteInputRef}
-          value={noteValue}
-          onChange={(nextValue) => onNoteChange?.(postId, nextValue)}
-          label={`Notes pour ${postId}`}
-          placeholder="Ajouter une note pour ce poste"
-        />
-
-        {postSheetLink && (
-          <a
-            href={postSheetLink}
-            target="_blank"
-            rel="noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center justify-center gap-3 w-full py-4 bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-blue-900/20 active:scale-[0.98] transition-all"
-          >
-            <ExternalLink className="w-4 h-4" /> Consulter la fiche de poste
-          </a>
-        )}
       </div>
     </div>
   );
@@ -386,6 +439,7 @@ const ExplorerDesktopRow = ({
               noteValue={noteValue}
               onNoteChange={onNoteChange}
               noteInputRef={noteInputRef}
+              surface="desktop"
             />
           </td>
         </tr>
@@ -598,6 +652,7 @@ const SortableItem = ({
           noteValue={noteValue}
           onNoteChange={onNoteChange}
           noteInputRef={noteInputRef}
+          surface="ranking"
         />
       </div>
 
@@ -637,11 +692,14 @@ const ExplorerMobileItem = ({
 
   return (
     <div
+      data-testid={`mobile-post-card-${id}`}
+      data-expanded={isExpanded ? 'true' : 'false'}
       onClick={() => onToggle(id)}
       className={cn(
-        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer",
+        "bg-white flex items-start gap-2 p-2 transition-all group cursor-pointer border border-transparent rounded-t-[1.5rem]",
         isTaken && "opacity-50 grayscale bg-slate-50",
-        isShortlisted && "bg-amber-50/20"
+        isShortlisted && "bg-amber-50/20",
+        isExpanded && "bg-amber-50 border-amber-200 shadow-sm ring-1 ring-amber-100"
       )}
     >
       <div className="shrink-0 pt-1">
@@ -718,7 +776,7 @@ const ExplorerMobileEntry = ({
   const noteInputRef = useRef(null);
 
   return (
-    <>
+    <div className={cn("px-2 pt-2", isExpanded && "rounded-[1.75rem] bg-amber-50/40")}>
       <ExplorerMobileItem
         item={item}
         isTaken={isTaken}
@@ -737,9 +795,10 @@ const ExplorerMobileEntry = ({
           noteValue={noteValue}
           onNoteChange={onNoteChange}
           noteInputRef={noteInputRef}
+          surface="mobile"
         />
       )}
-    </>
+    </div>
   );
 };
 
