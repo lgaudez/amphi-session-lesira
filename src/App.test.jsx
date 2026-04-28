@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import App from './App'
@@ -38,6 +38,10 @@ const getMobileExplorerCard = () => {
 }
 
 describe('App shared notes', () => {
+  afterEach(() => {
+    cleanup()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     window.localStorage.clear()
@@ -176,14 +180,10 @@ describe('App shared notes', () => {
     await userEvent.setup().click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
 
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
-    if (!within(rankingRow).queryByTitle('Voir la fiche')) {
-      await userEvent.setup().click(rankingRow)
-    }
-
     const rankingActions = within(rankingRow).getByTestId('ranking-row-actions')
 
     expect(within(rankingActions).getByLabelText('Note')).toBeTruthy()
-    expect(within(rankingActions).getByTitle('Voir la fiche')).toBeTruthy()
+    expect(within(rankingRow).getAllByTitle('Voir la fiche').length).toBeGreaterThan(0)
   })
 
   it('does not collapse the ranking row when interacting with the note editor', async () => {
@@ -195,14 +195,14 @@ describe('App shared notes', () => {
     await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
 
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
-    await user.click(rankingRow)
+    fireEvent.click(within(rankingRow).getByText(TEST_POST['Intitulé du poste']))
 
-    const rankingNoteField = within(rankingRow).getByLabelText('Notes pour REF-001')
+    const rankingNoteField = await screen.findByLabelText('Notes pour REF-001')
     await user.click(rankingNoteField)
     await user.type(rankingNoteField, 'abc')
 
-    expect(within(rankingRow).getByLabelText('Notes pour REF-001')).toBeTruthy()
-    expect(within(rankingRow).getByLabelText('Notes pour REF-001').value).toContain('abc')
+    expect(await screen.findByLabelText('Notes pour REF-001')).toBeTruthy()
+    expect(screen.getByLabelText('Notes pour REF-001').value).toContain('abc')
   })
 
   it('uses stronger row separators in both desktop lists', async () => {
@@ -288,7 +288,7 @@ describe('App shared notes', () => {
     ).toBeNull()
   })
 
-  it('shows the ranking mobile title only once when expanded', async () => {
+  it('hides the ranking row title and keeps the detail title in the expanded panel', async () => {
     const user = userEvent.setup()
 
     render(<App />)
@@ -297,9 +297,25 @@ describe('App shared notes', () => {
     await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
 
     const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
-    await user.click(rankingRow)
+    fireEvent.click(within(rankingRow).getByText(TEST_POST['Intitulé du poste']))
 
-    const titleMatches = within(rankingRow).getAllByText(TEST_POST['Intitulé du poste'])
-    expect(titleMatches).toHaveLength(1)
+    expect(within(rankingRow).queryByRole('heading', { level: 3 })).toBeNull()
+    expect(within(rankingRow).getByText(TEST_POST['Intitulé du poste'])).toBeTruthy()
+  })
+
+  it('uses a small header icon instead of a bottom sheet CTA in expanded ranking mobile view', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+    await user.click(screen.getAllByRole('button', { name: /mon ranking/i })[0])
+
+    const rankingRow = screen.getByTestId('ranking-post-row-REF-001')
+    fireEvent.click(within(rankingRow).getByText(TEST_POST['Intitulé du poste']))
+
+    expect(within(rankingRow).queryByText(/consulter la fiche de poste/i)).toBeNull()
+    expect(within(rankingRow).getByTitle('Voir la fiche')).toBeTruthy()
+    expect(await screen.findByTestId('job-detail-desktop')).toBeTruthy()
   })
 })

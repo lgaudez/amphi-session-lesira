@@ -157,7 +157,7 @@ const JobDetailCard = ({
         isMobileSurface
           ? "px-4 pb-6 pt-5 border-x border-b border-amber-200 bg-amber-50/70 shadow-[inset_0_1px_0_rgba(251,191,36,0.35)]"
           : isRankingSurface
-            ? "px-0 pb-4 pt-4 md:px-4 md:py-8 bg-slate-50 border-t-2 border-blue-100"
+            ? "px-0 pb-4 pt-3 md:px-4 md:py-8 bg-slate-50"
             : "px-4 py-8 bg-slate-50 border-t-2 border-blue-100",
       )}
     >
@@ -177,6 +177,18 @@ const JobDetailCard = ({
             )}>Détails du poste</h4>
             <p className="text-sm font-black text-slate-900 leading-tight uppercase tracking-tight">{item['Intitulé du poste']}</p>
           </div>
+          {postSheetLink && isRankingSurface && (
+            <a
+              href={postSheetLink}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-400 shadow-sm transition-colors hover:text-blue-600"
+              title="Voir la fiche"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
         </div>
 
         <div className={cn(
@@ -244,7 +256,7 @@ const JobDetailCard = ({
             />
           </div>
         </div>
-        {postSheetLink && isDesktopSurface && (
+        {postSheetLink && isDesktopSurface && !isRankingSurface && (
           <a
             data-testid="desktop-sheet-cta"
             href={postSheetLink}
@@ -588,14 +600,14 @@ const SortableItem = ({
           )}
         </div>
 
-        <h3 className={cn(
-          "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors",
-          !isExpanded && "truncate",
-          isExpanded && "hidden md:block",
-          isTaken && "line-through"
-        )}>
-          {item['Intitulé du poste']}
-        </h3>
+        {!isExpanded && (
+          <h3 className={cn(
+            "text-[10px] md:text-sm font-bold text-slate-900 leading-tight group-hover:text-blue-800 transition-colors truncate",
+            isTaken && "line-through"
+          )}>
+            {item['Intitulé du poste']}
+          </h3>
+        )}
 
         {!isExpanded && (
           <div className="flex flex-col gap-0.5">
