@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Papa from 'papaparse';
 import logoGaudez from './assets/logo-gaudez.png';
+import PostNotesEditor from './components/PostNotesEditor';
 import {
   STORAGE_KEYS,
   parseImportedSession,
@@ -131,9 +132,11 @@ const StatCard = ({ title, value, icon: Icon, colorClass, className }) => (
   </div>
 );
 
-const JobDetailCard = ({ item, isExpanded, onToggle }) => {
+const JobDetailCard = ({ item, isExpanded, onToggle, noteValue = '', onNoteChange }) => {
   if (!isExpanded) return null;
   const postSheetLink = getPostSheetLink(item);
+  const postId = item.Référence;
+  const noteFieldId = `post-note-${postId}`;
 
   return (
     <div className="px-4 py-8 bg-slate-50 border-t-2 border-blue-100 animate-in fade-in slide-in-from-top-2">
@@ -181,6 +184,14 @@ const JobDetailCard = ({ item, isExpanded, onToggle }) => {
             <ThemeBadge theme={item['Thématique']} className="max-w-[190px]" />
           </div>
         </div>
+
+        <PostNotesEditor
+          id={noteFieldId}
+          value={noteValue}
+          onChange={(nextValue) => onNoteChange?.(postId, nextValue)}
+          label={`Notes pour ${postId}`}
+          placeholder="Ajouter une note pour ce poste"
+        />
 
         {postSheetLink && (
           <a
@@ -243,6 +254,43 @@ const AvailabilityButton = ({ isTaken, onClick, className }) => (
     <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
   </button>
 );
+
+const PostNoteButton = ({ postId, hasNote, isExpanded = false, onOpen, compact = false, className }) => {
+  const noteFieldId = `post-note-${postId}`;
+  const label = `${hasNote ? 'Modifier' : 'Ajouter'} une note pour ${postId}`;
+
+  const handleClick = (event) => {
+    event.stopPropagation();
+
+    if (isExpanded) {
+      document.getElementById(noteFieldId)?.focus();
+      return;
+    }
+
+    onOpen?.(postId);
+  };
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={hasNote ? 'Modifier la note' : 'Ajouter une note'}
+      data-has-note={hasNote ? 'true' : 'false'}
+      onClick={handleClick}
+      className={cn(
+        "inline-flex shrink-0 items-center justify-center gap-1.5 border font-black uppercase shadow-sm transition-all",
+        compact ? "h-7 w-7 rounded-lg" : "h-8 rounded-xl px-2.5 text-[9px] tracking-widest",
+        hasNote
+          ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+          : "border-slate-200 bg-white text-slate-400 hover:border-blue-200 hover:text-blue-600",
+        className
+      )}
+    >
+      <FileText className="w-3.5 h-3.5" />
+      {!compact && <span>{hasNote ? 'Note' : 'Notes'}</span>}
+    </button>
+  );
+};
 
 const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -343,11 +391,23 @@ const MultiSelect = ({ label, options, selected, onChange, placeholder, icon: Ic
   );
 };
 
-const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, isExpanded, onToggle }) => {
+const SortableItem = ({
+  id,
+  item,
+  index,
+  isTaken,
+  toggleTaken,
+  toggleShortlist,
+  isExpanded,
+  onToggle,
+  noteValue = '',
+  onNoteChange,
+}) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = { transform: CSS.Transform.toString(transform), transition, zIndex: isDragging ? 10 : 0 };
   const postSheetLink = getPostSheetLink(item);
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+  const hasNote = Boolean(noteValue);
 
   return (
     <div
@@ -381,6 +441,13 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
           <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[95px] !px-2 !py-0.5 !text-[10px] md:max-w-[180px] md:!px-3 md:!py-1 md:!text-xs" />
+          <PostNoteButton
+            postId={id}
+            hasNote={hasNote}
+            isExpanded={isExpanded}
+            onOpen={onToggle}
+            className="ml-auto"
+          />
           {!isExpanded && postSheetLink && (
             <a
               href={postSheetLink}
@@ -420,7 +487,13 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
           </div>
         )}
 
-        <JobDetailCard item={item} isExpanded={isExpanded} onToggle={onToggle} />
+        <JobDetailCard
+          item={item}
+          isExpanded={isExpanded}
+          onToggle={onToggle}
+          noteValue={noteValue}
+          onNoteChange={onNoteChange}
+        />
       </div>
 
       {/* Right side: Buttons stacked */}
@@ -442,10 +515,11 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
   );
 };
 
-const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onToggle }) => {
+const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onToggle, noteValue = '', isExpanded = false }) => {
   const id = item.Référence;
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
   const postSheetLink = getPostSheetLink(item);
+  const hasNote = Boolean(noteValue);
 
   return (
     <div
@@ -471,6 +545,13 @@ const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onT
           <span className="text-[10px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{id}</span>
           <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'} className="!px-1.5 !py-0 !text-[8px]">{item['Env.']}</Badge>
           <ThemeBadge theme={themeLabel} className="max-w-[68px] !px-1 !py-0 !text-[7px]" />
+          <PostNoteButton
+            postId={id}
+            hasNote={hasNote}
+            isExpanded={isExpanded}
+            onOpen={onToggle}
+            compact
+          />
           {postSheetLink && (
             <a
               href={postSheetLink}
@@ -1202,9 +1283,17 @@ export default function App() {
                       isShortlisted={shortlisted.includes(item.Référence)}
                       toggleShortlist={toggleShortlist}
                       onToggle={toggleExpand}
+                      noteValue={notesByPostId[item.Référence] ?? ''}
+                      isExpanded={expandedIds.has(item.Référence)}
                     />
                     {expandedIds.has(item.Référence) && (
-                      <JobDetailCard item={item} isExpanded={true} onToggle={toggleExpand} />
+                      <JobDetailCard
+                        item={item}
+                        isExpanded={true}
+                        onToggle={toggleExpand}
+                        noteValue={notesByPostId[item.Référence] ?? ''}
+                        onNoteChange={updatePostNote}
+                      />
                     )}
                   </React.Fragment>
                 ))}
@@ -1225,6 +1314,8 @@ export default function App() {
                     {pagedData.map((item, idx) => {
                       const postSheetLink = getPostSheetLink(item);
                       const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
+                      const noteValue = notesByPostId[item.Référence] ?? '';
+                      const hasNote = Boolean(noteValue);
                       return (
                       <React.Fragment key={`${item.Référence}-${idx}`}>
                         <tr
@@ -1245,6 +1336,12 @@ export default function App() {
                                 <span className="text-[10px] md:text-[11px] font-black text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-lg border border-slate-200 flex-shrink-0 tabular-nums tracking-tight">{item.Référence}</span>
                                 <Badge variant={item['Env.'] === 'AC' ? 'ac' : 'ate'}>{item['Env.']}</Badge>
                                 <ThemeBadge theme={themeLabel} className="max-w-[220px]" />
+                                <PostNoteButton
+                                  postId={item.Référence}
+                                  hasNote={hasNote}
+                                  isExpanded={expandedIds.has(item.Référence)}
+                                  onOpen={toggleExpand}
+                                />
                               </div>
                               <p className="font-bold text-slate-900 group-hover:text-blue-800 transition-colors text-[10px] md:text-sm leading-tight line-clamp-2 md:line-clamp-none whitespace-normal">{item['Intitulé du poste']}</p>
                             </div>
@@ -1288,6 +1385,19 @@ export default function App() {
                             )}
                           </td>
                         </tr>
+                        {expandedIds.has(item.Référence) && (
+                          <tr className="bg-slate-50">
+                            <td colSpan={5} className="p-0">
+                              <JobDetailCard
+                                item={item}
+                                isExpanded={true}
+                                onToggle={toggleExpand}
+                                noteValue={noteValue}
+                                onNoteChange={updatePostNote}
+                              />
+                            </td>
+                          </tr>
+                        )}
                       </React.Fragment>
                     )})}
                   </tbody>
@@ -1365,6 +1475,8 @@ export default function App() {
                         toggleShortlist={toggleShortlist}
                         isExpanded={expandedIds.has(item.Référence)}
                         onToggle={toggleExpand}
+                        noteValue={notesByPostId[item.Référence] ?? ''}
+                        onNoteChange={updatePostNote}
                       />
                     ))}
                   </SortableContext>
