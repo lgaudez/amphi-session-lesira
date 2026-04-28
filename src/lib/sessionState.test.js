@@ -80,6 +80,26 @@ describe('parseImportedSession', () => {
     })
   })
 
+  it('normalizes imported notes and drops invalid entries', () => {
+    expect(
+      parseImportedSession({
+        shortlisted: ['a'],
+        taken: ['b'],
+        notes: {
+          a: '  Keep me  ',
+          b: '   ',
+          c: 123,
+        },
+      }),
+    ).toEqual({
+      shortlisted: ['a'],
+      taken: ['b'],
+      notes: {
+        a: 'Keep me',
+      },
+    })
+  })
+
   it('returns empty state on malformed payload', () => {
     expect(parseImportedSession('bad payload')).toEqual(emptySessionState())
     expect(parseImportedSession(null)).toEqual(emptySessionState())

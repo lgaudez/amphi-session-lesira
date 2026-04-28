@@ -2,17 +2,25 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import Papa from 'papaparse';
 import logoGaudez from './assets/logo-gaudez.png';
 import {
+  STORAGE_KEYS,
+  parseImportedSession,
+  parseStoredArray,
+  parseStoredNotes,
+  serializeSession,
+  updateNotesMap,
+} from './lib/sessionState';
+import {
   Search,
   Building2,
   MapPin,
   Briefcase,
   ExternalLink,
   Filter,
-  BarChart3,
   ChevronDown,
   Loader2,
   PieChart,
   Star,
+  Check,
   CheckCircle2,
   Download,
   Upload,
@@ -84,10 +92,6 @@ function cn(...inputs) {
 
 // --- Configuration ---
 const CSV_URL = "https://docs.google.com/spreadsheets/d/189NQW59RAkWaFWD296qfVhVd1yIWUxgk5XRoPcLKqRw/export?format=csv&gid=0";
-
-const COLORS = [
-  '#000091', '#E1000F', '#00AC8E', '#FFB800', '#718096', '#ED8936', '#4299E1', '#9F7AEA'
-];
 
 const getPostSheetLink = (item) =>
   item?.['Lien vers la fiche de poste'] ||
@@ -438,7 +442,7 @@ const SortableItem = ({ id, item, index, isTaken, toggleTaken, toggleShortlist, 
   );
 };
 
-const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleTaken, toggleShortlist, onToggle }) => {
+const ExplorerMobileItem = ({ item, isTaken, isShortlisted, toggleShortlist, onToggle }) => {
   const id = item.Référence;
   const themeLabel = item['Thématique']?.trim() || 'Non renseigné';
   const postSheetLink = getPostSheetLink(item);
@@ -607,10 +611,10 @@ export default function App() {
   const [showRankingHelp, setShowRankingHelp] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [showDesktopFilters, setShowDesktopFilters] = useState(true);
-  const [showMobileStats, setShowMobileStats] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
-  const [shortlisted, setShortlisted] = useState(() => JSON.parse(localStorage.getItem('ira_shortlisted') || '[]'));
-  const [taken, setTaken] = useState(() => JSON.parse(localStorage.getItem('ira_taken') || '[]'));
+  const [shortlisted, setShortlisted] = useState(() => parseStoredArray(localStorage.getItem(STORAGE_KEYS.shortlisted)));
+  const [taken, setTaken] = useState(() => parseStoredArray(localStorage.getItem(STORAGE_KEYS.taken)));
+  const [notesByPostId, setNotesByPostId] = useState(() => parseStoredNotes(localStorage.getItem(STORAGE_KEYS.notes)));
 
   // Multi-Filter States
   const [search, setSearch] = useState('');
@@ -623,6 +627,69 @@ export default function App() {
   const [itemsPerPage, setItemsPerPage] = useState(50);
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedIds, setExpandedIds] = useState(new Set());
+
+  const updatePostNote = useCallback((postId, nextValue) => {
+    setNotesByPostId(previousNotes => updateNotesMap(previousNotes, postId, nextValue));
+  }, []);
+
+  const sharedNotesSession = useMemo(() => ({
+    notesByPostId,
+    updatePostNote,
+  }), [notesByPostId, updatePostNote]);
+
+  const resetCurrentPage = useCallback(() => {
+    setCurrentPage(1);
+  }, []);
+
+  const handleSearchChange = useCallback((nextValue) => {
+    setSearch(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleEnvFilterChange = useCallback((nextValue) => {
+    setEnvFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleMinFilterChange = useCallback((nextValue) => {
+    setMinFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleThemeFilterChange = useCallback((nextValue) => {
+    setThemeFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleRegionFilterChange = useCallback((nextValue) => {
+    setRegionFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleDeptFilterChange = useCallback((nextValue) => {
+    setDeptFilter(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleHideTakenToggle = useCallback(() => {
+    setHideTaken(previousValue => !previousValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const handleItemsPerPageChange = useCallback((nextValue) => {
+    setItemsPerPage(nextValue);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
+
+  const resetFilters = useCallback(() => {
+    setSearch('');
+    setEnvFilter([]);
+    setMinFilter([]);
+    setThemeFilter([]);
+    setRegionFilter([]);
+    setDeptFilter([]);
+    resetCurrentPage();
+  }, [resetCurrentPage]);
 
   // Filter state indicators
   const filterCount = [envFilter, minFilter, themeFilter, regionFilter, deptFilter].filter(f => f.length > 0).length + (search ? 1 : 0);
@@ -662,8 +729,9 @@ export default function App() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  useEffect(() => { localStorage.setItem('ira_shortlisted', JSON.stringify(shortlisted)); }, [shortlisted]);
-  useEffect(() => { localStorage.setItem('ira_taken', JSON.stringify(taken)); }, [taken]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.shortlisted, JSON.stringify(shortlisted)); }, [shortlisted]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.taken, JSON.stringify(taken)); }, [taken]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.notes, JSON.stringify(sharedNotesSession.notesByPostId)); }, [sharedNotesSession]);
 
   useEffect(() => {
     Papa.parse(CSV_URL, {
@@ -689,7 +757,11 @@ export default function App() {
   };
 
   const exportSession = () => {
-    const blob = new Blob([JSON.stringify({ shortlisted, taken }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([serializeSession({
+      shortlisted,
+      taken,
+      notes: sharedNotesSession.notesByPostId,
+    })], { type: 'application/json' });
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `session-ira.json`; a.click();
   };
 
@@ -697,9 +769,16 @@ export default function App() {
     const f = e.target.files[0]; if (!f) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const json = JSON.parse(ev.target.result);
-      if (json.shortlisted) setShortlisted(json.shortlisted);
-      if (json.taken) setTaken(json.taken);
+      try {
+        const importedSession = parseImportedSession(JSON.parse(ev.target.result));
+        setShortlisted(importedSession.shortlisted);
+        setTaken(importedSession.taken);
+        setNotesByPostId(importedSession.notes);
+      } catch {
+        // Ignore malformed JSON imports and keep the current session intact.
+      } finally {
+        e.target.value = '';
+      }
     };
     reader.readAsText(f);
   };
@@ -756,8 +835,6 @@ export default function App() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const pagedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  useEffect(() => { setCurrentPage(1); }, [search, envFilter, minFilter, themeFilter, regionFilter, deptFilter, hideTaken, itemsPerPage]);
-
   if (loading) return (
     <div className="fixed inset-0 flex flex-col items-center justify-center bg-white z-50 gap-6">
       <div className="relative">
@@ -772,6 +849,18 @@ export default function App() {
       </div>
     </div>
   );
+
+  if (error) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-md rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Erreur</p>
+          <h1 className="text-xl font-black text-slate-900">Chargement impossible</h1>
+          <p className="text-sm font-medium text-slate-500">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 px-3 md:px-8 lg:px-12 selection:bg-blue-100 selection:text-blue-900 pb-20">
@@ -930,7 +1019,7 @@ export default function App() {
                   </div>
                   {filterCount > 0 && (
                     <button
-                      onClick={() => { setSearch(''); setEnvFilter([]); setMinFilter([]); setThemeFilter([]); setRegionFilter([]); setDeptFilter([]); }}
+                      onClick={resetFilters}
                       className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white text-blue-600 rounded-xl text-[9px] font-black uppercase shadow-sm border border-blue-100 hover:bg-blue-800 hover:text-white transition-all shrink-0"
                     >
                       <RotateCcw className="w-3 h-3" />
@@ -941,7 +1030,7 @@ export default function App() {
 
                 <div className="flex items-center gap-2 min-w-0 ml-auto">
                   <button
-                    onClick={() => setHideTaken(!hideTaken)}
+                    onClick={handleHideTakenToggle}
                     className={cn(
                       "p-2.5 md:px-4 md:py-2 rounded-xl text-[9px] md:text-xs font-black transition-all border uppercase tracking-wider flex items-center gap-2 shrink-0 shadow-sm",
                       hideTaken
@@ -1017,20 +1106,20 @@ export default function App() {
                         placeholder="ID en premier (ex: agri-AC-01)"
                         className="w-full pl-10 pr-9 py-3 bg-slate-100 border-2 border-transparent hover:bg-slate-200/50 focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-medium text-sm placeholder:font-medium"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                       {search && (
-                        <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
+                        <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full flex items-center justify-center transition-colors">
                           <X className="w-3 h-3 text-slate-500" />
                         </button>
                       )}
                     </div>
                   </div>
-                  <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
-                  <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
-                  <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
-                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
+                  <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={handleEnvFilterChange} placeholder="Tous" />
+                  <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={handleMinFilterChange} placeholder="Tous les ministères" />
+                  <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={handleThemeFilterChange} placeholder="Toutes thématiques" />
+                  <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={handleRegionFilterChange} placeholder="Toutes régions" />
+                  <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={handleDeptFilterChange} placeholder="Tous les dépts" />
                 </div>
               </div>
             </section>
@@ -1041,7 +1130,7 @@ export default function App() {
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onClick={() => setShowFilters(false)} />
                 <div
                   className="relative bg-white rounded-t-[3rem] shadow-2xl flex flex-col animate-in slide-in-from-bottom duration-300 ease-out overflow-hidden w-full left-0 right-0 border-x border-slate-100"
-                  style={{ maxHeight: '85vh', maxHeight: '85dvh' }}
+                  style={{ maxHeight: '85dvh' }}
                 >
                   <div className="px-8 pt-8 pb-4 flex justify-between items-center shrink-0 bg-white border-b border-slate-50 relative z-30">
                     <div className="space-y-1">
@@ -1060,15 +1149,15 @@ export default function App() {
                         placeholder="ID, Poste, Mots-clés..."
                         className="w-full px-6 py-4 bg-slate-100 border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl transition-all outline-none font-bold text-sm shadow-inner"
                         value={search}
-                        onChange={(e) => setSearch(e.target.value)}
+                        onChange={(e) => handleSearchChange(e.target.value)}
                       />
                     </div>
                     <div className="space-y-6">
-                      <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={setEnvFilter} placeholder="Tous" />
-                      <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={setMinFilter} placeholder="Tous les ministères" />
-                      <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={setThemeFilter} placeholder="Toutes thématiques" />
-                      <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={setRegionFilter} placeholder="Toutes régions" />
-                      <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={setDeptFilter} placeholder="Tous les dépts" />
+                      <MultiSelect label="Environnement" icon={Briefcase} options={options.env} selected={envFilter} onChange={handleEnvFilterChange} placeholder="Tous" />
+                      <MultiSelect label="Ministère" icon={Building2} options={options.min} selected={minFilter} onChange={handleMinFilterChange} placeholder="Tous les ministères" />
+                      <MultiSelect label="Thématique" icon={RotateCcw} options={options.themes} selected={themeFilter} onChange={handleThemeFilterChange} placeholder="Toutes thématiques" />
+                      <MultiSelect label="Région" icon={MapPin} options={options.regions} selected={regionFilter} onChange={handleRegionFilterChange} placeholder="Toutes régions" />
+                      <MultiSelect label="Département" icon={MapPin} options={options.depts} selected={deptFilter} onChange={handleDeptFilterChange} placeholder="Tous les dépts" />
                     </div>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 px-8 pt-6 pb-10 bg-gradient-to-t from-white via-white to-white/0 pointer-events-none z-30">
@@ -1094,7 +1183,7 @@ export default function App() {
                   <select
                     className="bg-slate-100 px-2 md:px-3 py-1.5 rounded-lg text-xs font-black border-transparent focus:ring-0 outline-none cursor-pointer"
                     value={itemsPerPage}
-                    onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
                   >
                     {[10, 25, 50, 100, 250, 500, 1000].map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
@@ -1107,7 +1196,6 @@ export default function App() {
                       item={item}
                       isTaken={taken.includes(item.Référence)}
                       isShortlisted={shortlisted.includes(item.Référence)}
-                      toggleTaken={toggleTaken}
                       toggleShortlist={toggleShortlist}
                       onToggle={toggleExpand}
                     />
