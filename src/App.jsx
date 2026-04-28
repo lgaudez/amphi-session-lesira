@@ -1004,12 +1004,9 @@ export default function App() {
   }, [showFilters]);
 
   const toggleExpand = (id) => {
-    setExpandedIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setExpandedIds(prev => (
+      prev.has(id) ? new Set() : new Set([id])
+    ));
   };
 
   const sensors = useSensors(

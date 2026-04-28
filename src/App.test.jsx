@@ -27,6 +27,18 @@ const TEST_POST = {
   Thématique: 'Transformation',
 }
 
+const SECOND_TEST_POST = {
+  Référence: 'REF-002',
+  'Intitulé du poste': 'Poste test secondaire',
+  'Lien vers la fiche de poste': 'https://example.com/poste-2',
+  Ministère: 'Ministère secondaire',
+  'Localisation (Commune ou adresse exacte)': 'Lyon',
+  'Code postal': '69001',
+  Région: 'Auvergne-Rhône-Alpes',
+  'Env.': 'ATE',
+  Thématique: 'Budget',
+}
+
 const getDesktopExplorerRow = () => {
   const rows = document.querySelectorAll('[data-testid="desktop-post-row-REF-001-desktop"]')
   return rows[rows.length - 1]
@@ -49,7 +61,7 @@ describe('App shared notes', () => {
     window.scrollTo = vi.fn()
 
     Papa.parse.mockImplementation((_url, options) => {
-      options.complete({ data: [TEST_POST] })
+      options.complete({ data: [TEST_POST, SECOND_TEST_POST] })
     })
   })
 
@@ -209,6 +221,32 @@ describe('App shared notes', () => {
 
     expect(await screen.findByLabelText('Notes pour REF-001')).toBeTruthy()
     expect(screen.getByLabelText('Notes pour REF-001').value).toContain('abc')
+  })
+
+  it('keeps only one row expanded at a time while still allowing collapse on re-click', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await screen.findAllByText(TEST_POST['Intitulé du poste'])
+
+    const firstRow = getDesktopExplorerRow()
+    const secondRow = document.querySelector('[data-testid="desktop-post-row-REF-002-desktop"]')
+
+    await user.click(firstRow)
+    const firstDetailRow = firstRow.nextElementSibling
+    expect(firstDetailRow).not.toBeNull()
+    expect(within(firstDetailRow).getByLabelText('Notes pour REF-001')).toBeTruthy()
+
+    await user.click(secondRow)
+    expect(screen.getAllByTestId('job-detail-desktop')).toHaveLength(1)
+    expect(within(firstDetailRow).queryByLabelText('Notes pour REF-001')).toBeNull()
+    const secondDetailRow = secondRow.nextElementSibling
+    expect(secondDetailRow).not.toBeNull()
+    expect(within(secondDetailRow).getByLabelText('Notes pour REF-002')).toBeTruthy()
+
+    await user.click(secondRow)
+    expect(screen.queryAllByTestId('job-detail-desktop')).toHaveLength(0)
   })
 
   it('uses stronger row separators in both desktop lists', async () => {
