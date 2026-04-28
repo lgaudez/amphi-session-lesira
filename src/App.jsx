@@ -663,8 +663,8 @@ const SortableItem = ({
       </div>
 
       {/* Right side: Buttons stacked */}
-      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:min-w-[88px] md:pl-3">
-        <div data-testid="ranking-row-actions" className="hidden md:flex items-center justify-center gap-1.5">
+      <div className="flex flex-col items-center justify-center gap-1 shrink-0 pl-1 border-l border-slate-100 self-stretch md:min-w-[112px] md:justify-between md:gap-3 md:pl-4">
+        <div data-testid="ranking-row-actions" className="hidden md:flex min-h-8 items-center justify-center gap-1.5">
           {hasNote && (
             <PassiveNoteIndicator className="h-8 w-8 group-hover:border-blue-200 group-hover:text-blue-600" />
           )}
@@ -681,7 +681,7 @@ const SortableItem = ({
             </a>
           )}
         </div>
-        <div className="flex flex-col items-center justify-center gap-1 md:flex-row md:gap-2">
+        <div className="flex flex-col items-center justify-center gap-1 md:min-h-10 md:flex-row md:gap-2">
           <AvailabilityButton
             isTaken={isTaken}
             onClick={(e) => { e.stopPropagation(); toggleTaken(id); }}
