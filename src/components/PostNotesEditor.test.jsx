@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import PostNotesEditor from './PostNotesEditor'
 
-const ControlledEditorHarness = ({ initialValue, onChange, placeholder }) => {
+const ControlledEditorHarness = ({ initialValue, onChange, placeholder, ...props }) => {
   const [value, setValue] = useState(initialValue)
 
   const handleChange = (nextValue) => {
@@ -20,6 +20,7 @@ const ControlledEditorHarness = ({ initialValue, onChange, placeholder }) => {
       value={value}
       onChange={handleChange}
       placeholder={placeholder}
+      {...props}
     />
   )
 }
@@ -34,6 +35,8 @@ describe('PostNotesEditor', () => {
         initialValue="Current note"
         onChange={handleChange}
         placeholder="Ajouter une note personnelle"
+        name="post-notes"
+        maxLength={120}
       />,
     )
 
@@ -41,6 +44,8 @@ describe('PostNotesEditor', () => {
 
     expect(textarea.value).toBe('Current note')
     expect(textarea.getAttribute('placeholder')).toBe('Ajouter une note personnelle')
+    expect(textarea.getAttribute('name')).toBe('post-notes')
+    expect(textarea.maxLength).toBe(120)
 
     await user.clear(textarea)
     await user.type(textarea, 'Updated note')

@@ -5,12 +5,14 @@ const PostNotesEditor = ({
   onChange,
   label = 'Notes',
   placeholder = 'Ajouter une note personnelle',
+  ...textareaProps
 }) => (
   <label className="flex flex-col gap-2 text-left">
     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
       {label}
     </span>
     <textarea
+      {...textareaProps}
       value={value}
       onChange={(event) => onChange?.(event.target.value)}
       placeholder={placeholder}
